@@ -8,12 +8,12 @@ import (
 	"gophermart/internal/app/services"
 	"io"
 	"net/http"
-	"time"
 )
 
 type OrderService interface {
 	GetOrCreateOrder(ctx context.Context, orderToCreate domain.OrderDTO) (*domain.OrderDTO, bool, error)
 	GetOrdersByUser(ctx context.Context, user *domain.UserDTO) ([]*domain.OrderDTO, error)
+	UpdateOrdersStatusesByNumber(ctx context.Context, orders []domain.OrderDTO) error
 }
 
 type OrderNumberValidator interface {
@@ -44,20 +44,19 @@ func (h *OrderHandler) HandleCreateOrder(c *gin.Context) {
 	}
 
 	if len(b) == 0 {
-		c.String(http.StatusBadRequest, "Request body can not be empty")
+		c.JSON(http.StatusBadRequest, gin.H{"errors": "Request body can not be empty"})
 		return
 	}
 	orderNumber := string(b)
 	if !h.orderNumberValidator.Validate(orderNumber) {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"errors": "order number is not valid"})
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"errors": "Order number is not valid"})
 		return
 	}
 
 	// создаем или получаем созданный ранее заказ
 	orderToCreate := domain.OrderDTO{
-		Number:     orderNumber,
-		UploadedAt: time.Now(),
-		UserID:     user.ID,
+		Number: orderNumber,
+		UserID: user.ID,
 	}
 	order, created, err := h.orderService.GetOrCreateOrder(c.Request.Context(), orderToCreate)
 	if errors.Is(err, services.ErrOrderExistsForOtherUser) {
@@ -94,4 +93,19 @@ func (h *OrderHandler) HandleListOrders(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, orders)
+}
+
+func (h *OrderHandler) CheckUpdatingOrdersStatus(c *gin.Context) {
+	orders := []domain.OrderDTO{
+		{
+			Status: "PROCESSED",
+			Number: "10001",
+		},
+		{
+			Status: "PROCESSED",
+			Number: "10002",
+		},
+	}
+
+	h.orderService.UpdateOrdersStatusesByNumber(c.Request.Context(), orders)
 }

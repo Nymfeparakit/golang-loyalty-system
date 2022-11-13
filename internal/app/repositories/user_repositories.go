@@ -49,7 +49,12 @@ func (r *UserRepository) GetUserByUsername(ctx context.Context, username string)
 func (r *UserRepository) IncreaseBalanceForOrder(ctx context.Context, orderNumber string, accrual int) error {
 	// находим пользователя, для которого сущесвует заказ
 	// и прибавляем ему баланс
-	query := `UPDATE auth_user u SET balance=balance+$1 JOIN user_order o on o.user_id = u.id WHERE o.number = $2`
+	query := `
+	UPDATE auth_user u SET balance=balance+$1
+	FROM user_order o
+	WHERE o.user_id = u.id 
+	AND o.number = $2
+	`
 	_, err := r.db.ExecContext(ctx, query, accrual, orderNumber)
 	if err != nil {
 		return err

@@ -64,3 +64,13 @@ func (r *OrderRepository) GetOrdersByUser(ctx context.Context, user *domain.User
 
 	return orders, nil
 }
+
+func (r *OrderRepository) UpdateOrderStatus(ctx context.Context, orderNumber string, orderStatus string) error {
+	query := `UPDATE user_order SET status=$1 WHERE number=$2`
+	_, err := r.db.ExecContext(ctx, query, &orderStatus, &orderNumber)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

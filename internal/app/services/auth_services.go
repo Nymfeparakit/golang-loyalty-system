@@ -77,6 +77,10 @@ func (s *AuthService) GetUserFromContext(ctx context.Context) (*domain.UserDTO, 
 	return userID, true
 }
 
+func (s *AuthService) ParseUserToken(tokenString string) (string, error) {
+	return s.tokenService.parseJWTToken(tokenString)
+}
+
 type JWTClaims struct {
 	jwt.RegisteredClaims
 	Username string `json:"username"`
@@ -96,7 +100,7 @@ func (s *AuthJWTTokenService) generateAuthToken(username string) (string, error)
 	return token.SignedString([]byte("123"))
 }
 
-func ParseJWTToken(tokenString string) (string, error) {
+func (s *AuthJWTTokenService) parseJWTToken(tokenString string) (string, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return "", ErrInvalidAccessToken

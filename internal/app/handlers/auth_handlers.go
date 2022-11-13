@@ -35,12 +35,13 @@ func (h *RegistrationHandler) HandleRegistration(c *gin.Context) {
 		Password: input.Password,
 	}
 	err := h.registrationService.RegisterUser(c.Request.Context(), userDTO)
+	// todo: импортировать ошибку не из repositories?
 	if errors.Is(err, repositories.ErrUserAlreadyExists) {
 		c.JSON(http.StatusConflict, gin.H{"errors": "User with given login already exists"})
 		return
 	}
 
-	c.Status(http.StatusOK)
+	c.String(http.StatusOK, "User successfully registered")
 }
 
 type AuthService interface {

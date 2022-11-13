@@ -32,8 +32,12 @@ func InitRouter(db *sqlx.DB, config *configs.Config) *gin.Engine {
 	orderHandler := NewOrderHandler(authService, orderService, orderNumberValidator)
 	needAuthURLsGroup.POST("/user/orders", orderHandler.HandleCreateOrder)
 	needAuthURLsGroup.GET("/user/orders", orderHandler.HandleListOrders)
+	needAuthURLsGroup.GET("/check-updating", orderHandler.CheckUpdatingOrdersStatus)
 
-	workers.InitOrdersWorkers(ordersCh, config, userService)
+	requestsWorker := workers.NewRateLimitedReqWorker()
+	go requestsWorker.ProcessRequests()
+	accrualCalculator := services.NewAccrualCalculationService(config.AccrualSystemAddr, requestsWorker)
+	workers.InitOrdersWorkers(ordersCh, userService, orderService, accrualCalculator)
 
 	return r
 }

@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"github.com/rs/zerolog/log"
 	"gophermart/internal/app/domain"
+	"time"
 )
 
 type OrderRepository interface {
 	GetOrCreateOrder(ctx context.Context, orderToCreate domain.OrderDTO) (*domain.OrderDTO, bool, error)
 	GetOrdersByUser(ctx context.Context, user *domain.UserDTO) ([]*domain.OrderDTO, error)
+	UpdateOrderStatus(ctx context.Context, orderNumber string, orderStatus string) error
 }
 
 type OrderService struct {
@@ -22,6 +24,7 @@ func NewOrderService(orderRepository OrderRepository, ordersCh chan string) *Ord
 }
 
 func (s *OrderService) GetOrCreateOrder(ctx context.Context, orderToCreate domain.OrderDTO) (*domain.OrderDTO, bool, error) {
+	orderToCreate.UploadedAt = time.Now()
 	order, created, err := s.orderRepository.GetOrCreateOrder(ctx, orderToCreate)
 	if err != nil {
 		return nil, false, err
@@ -44,6 +47,10 @@ func (s *OrderService) GetOrCreateOrder(ctx context.Context, orderToCreate domai
 
 func (s *OrderService) GetOrdersByUser(ctx context.Context, user *domain.UserDTO) ([]*domain.OrderDTO, error) {
 	return s.orderRepository.GetOrdersByUser(ctx, user)
+}
+
+func (s *OrderService) UpdateOrderStatus(ctx context.Context, orderNumber string, orderStatus string) error {
+	return s.orderRepository.UpdateOrderStatus(ctx, orderNumber, orderStatus)
 }
 
 type OrderNumberValidator struct {

@@ -2,15 +2,19 @@ package workers
 
 import (
 	"github.com/rs/zerolog/log"
-	"gophermart/internal/app/configs"
 )
 
-const workersNum = 8
+const workersNum = 1
 
-func InitOrdersWorkers(ordersCh chan string, config *configs.Config, userService UserService) {
+func InitOrdersWorkers(
+	ordersCh chan string,
+	userService UserService,
+	orderService OrderService,
+	calculator AccrualCalculator,
+) {
 	log.Info().Msg("starting orders workers")
 	for i := 0; i < workersNum; i++ {
-		worker := NewOrderAccrualWorker(ordersCh, config.AccrualSystemAddr, userService)
+		worker := NewOrderAccrualWorker(ordersCh, userService, orderService, calculator)
 		go worker.getOrdersAccrual()
 	}
 }
