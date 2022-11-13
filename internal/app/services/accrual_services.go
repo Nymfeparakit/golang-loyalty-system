@@ -35,21 +35,20 @@ func (s *AccrualCalculationService) CreateOrderForCalculation(orderNumber string
 	if err != nil {
 		return err
 	}
+	
 	log.Info().Msg(fmt.Sprintf("making request to %s", requestURL))
 	req, err := http.NewRequest(http.MethodPost, requestURL, reqBodyReader)
-	req.Header.Set("Content-Type", "application/json")
 	if err != nil {
 		return err
 	}
+	req.Header.Set("Content-Type", "application/json")
 	res, err := s.requestsWorker.HandleRequest(context.Background(), req)
 	if err != nil {
 		return err
 	}
+
 	respStatusCode := res.Response.StatusCode
 	if respStatusCode != http.StatusAccepted {
-		if err != nil {
-			return err
-		}
 		respBody := string(res.ReadBody)
 		return fmt.Errorf("creating order for accrual calculation failed: status code - %d, body - %v", respStatusCode, respBody)
 	}
