@@ -3,7 +3,9 @@ package handlers
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog/log"
 	"gophermart/internal/app/domain"
 	"gophermart/internal/app/repositories"
 	"gophermart/internal/app/services"
@@ -46,6 +48,7 @@ func (h *RegistrationHandler) HandleRegistration(c *gin.Context) {
 		return
 	}
 	if err != nil {
+		log.Error().Msg(fmt.Sprintf("can not register user: %v", err.Error()))
 		c.Status(http.StatusInternalServerError)
 	}
 
@@ -75,6 +78,7 @@ func (h *LoginHandler) HandleLogin(c *gin.Context) {
 		return
 	}
 	if err != nil {
+		log.Error().Msg(fmt.Sprintf("can not login user: %v", err.Error()))
 		c.Status(http.StatusInternalServerError)
 	}
 
