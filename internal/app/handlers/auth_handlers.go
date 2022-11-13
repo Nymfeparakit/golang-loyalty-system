@@ -36,7 +36,7 @@ func (h *RegistrationHandler) HandleRegistration(c *gin.Context) {
 	}
 
 	userDTO := domain.UserDTO{
-		Username: input.Username,
+		Login:    input.Login,
 		Password: input.Password,
 	}
 	tokenData, err := h.registrationService.RegisterUser(c.Request.Context(), userDTO)
@@ -69,7 +69,7 @@ func (h *LoginHandler) HandleLogin(c *gin.Context) {
 		return
 	}
 
-	tokenData, err := h.authService.AuthenticateUser(c.Request.Context(), input.Username, input.Password)
+	tokenData, err := h.authService.AuthenticateUser(c.Request.Context(), input.Login, input.Password)
 	if errors.Is(err, services.ErrInvalidCredentials) {
 		c.JSON(http.StatusUnauthorized, gin.H{"errors": "Invalid login or password"})
 		return

@@ -18,7 +18,7 @@ func TestTokenAuthMiddleware(t *testing.T) {
 	tokenValue := "123"
 	username := "abc"
 	user := domain.UserDTO{
-		Username: username,
+		Login: username,
 	}
 
 	tests := []struct {

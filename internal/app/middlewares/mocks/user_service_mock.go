@@ -36,9 +36,9 @@ func (m *MockUserService) EXPECT() *MockUserServiceMockRecorder {
 }
 
 // GetUserByUsername mocks base method.
-func (m *MockUserService) GetUserByUsername(arg0 context.Context, arg1 string) (*domain.UserDTO, error) {
+func (m *MockUserService) GetUserByLogin(arg0 context.Context, arg1 string) (*domain.UserDTO, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUserByUsername", arg0, arg1)
+	ret := m.ctrl.Call(m, "GetUserByLogin", arg0, arg1)
 	ret0, _ := ret[0].(*domain.UserDTO)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
@@ -47,5 +47,5 @@ func (m *MockUserService) GetUserByUsername(arg0 context.Context, arg1 string) (
 // GetUserByUsername indicates an expected call of GetUserByUsername.
 func (mr *MockUserServiceMockRecorder) GetUserByUsername(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByUsername", reflect.TypeOf((*MockUserService)(nil).GetUserByUsername), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByLogin", reflect.TypeOf((*MockUserService)(nil).GetUserByLogin), arg0, arg1)
 }

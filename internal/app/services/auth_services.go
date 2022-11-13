@@ -24,7 +24,7 @@ func (s *RegistrationService) RegisterUser(ctx context.Context, user domain.User
 	}
 
 	// генерируем токены для пользователя
-	tokenString, err := s.tokenService.generateAuthToken(user.Username)
+	tokenString, err := s.tokenService.generateAuthToken(user.Login)
 	if err != nil {
 		return nil, err
 	}
@@ -44,9 +44,9 @@ func NewAuthService(userService *UserService) *AuthService {
 	return &AuthService{userService: userService}
 }
 
-func (s *AuthService) AuthenticateUser(ctx context.Context, username string, password string) (*domain.TokenData, error) {
+func (s *AuthService) AuthenticateUser(ctx context.Context, login string, password string) (*domain.TokenData, error) {
 	// находим пользователя по логину
-	existingUser, err := s.userService.GetUserByUsername(ctx, username)
+	existingUser, err := s.userService.GetUserByLogin(ctx, login)
 	if errors.Is(err, ErrUserDoesNotExist) {
 		return nil, ErrInvalidCredentials
 	}
@@ -64,7 +64,7 @@ func (s *AuthService) AuthenticateUser(ctx context.Context, username string, pas
 	}
 
 	// генерируем токены для пользователя
-	tokenString, err := s.tokenService.generateAuthToken(existingUser.Username)
+	tokenString, err := s.tokenService.generateAuthToken(existingUser.Login)
 	if err != nil {
 		return nil, err
 	}
@@ -96,15 +96,15 @@ func (s *AuthService) ParseUserToken(tokenString string) (string, error) {
 
 type JWTClaims struct {
 	jwt.RegisteredClaims
-	Username string `json:"username"`
+	Username string
 }
 
 type AuthJWTTokenService struct {
 }
 
-func (s *AuthJWTTokenService) generateAuthToken(username string) (string, error) {
+func (s *AuthJWTTokenService) generateAuthToken(login string) (string, error) {
 	claims := JWTClaims{
-		Username:         username,
+		Username:         login,
 		RegisteredClaims: jwt.RegisteredClaims{},
 	}
 

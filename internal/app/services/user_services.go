@@ -12,7 +12,7 @@ const PasswordHashCost = 10
 
 type UserRepository interface {
 	CreateUser(ctx context.Context, user domain.UserDTO) error
-	GetUserByUsername(ctx context.Context, username string) (*domain.UserDTO, error)
+	GetUserByLogin(ctx context.Context, username string) (*domain.UserDTO, error)
 	IncreaseBalanceForOrder(ctx context.Context, orderNumber string, points int) error
 }
 
@@ -34,8 +34,8 @@ func (s *UserService) CreateUser(ctx context.Context, user domain.UserDTO) error
 	return s.userRepository.CreateUser(ctx, user)
 }
 
-func (s *UserService) GetUserByUsername(ctx context.Context, username string) (*domain.UserDTO, error) {
-	user, err := s.userRepository.GetUserByUsername(ctx, username)
+func (s *UserService) GetUserByLogin(ctx context.Context, username string) (*domain.UserDTO, error) {
+	user, err := s.userRepository.GetUserByLogin(ctx, username)
 	if errors.Is(err, repositories.ErrUserDoesNotExist) {
 		return nil, ErrUserDoesNotExist
 	}

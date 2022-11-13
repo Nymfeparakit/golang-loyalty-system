@@ -19,8 +19,8 @@ func NewUserRepository(db *sqlx.DB) *UserRepository {
 }
 
 func (r *UserRepository) CreateUser(ctx context.Context, user domain.UserDTO) error {
-	query := `INSERT INTO auth_user (username, password) VALUES ($1, $2)`
-	_, err := r.db.ExecContext(ctx, query, user.Username, user.Password)
+	query := `INSERT INTO auth_user (login, password) VALUES ($1, $2)`
+	_, err := r.db.ExecContext(ctx, query, user.Login, user.Password)
 
 	var pgErr pgx.PgError
 	if errors.As(err, &pgErr) {
@@ -32,10 +32,10 @@ func (r *UserRepository) CreateUser(ctx context.Context, user domain.UserDTO) er
 	return err
 }
 
-func (r *UserRepository) GetUserByUsername(ctx context.Context, username string) (*domain.UserDTO, error) {
-	query := `SELECT id, username, password FROM auth_user WHERE username=$1`
+func (r *UserRepository) GetUserByLogin(ctx context.Context, login string) (*domain.UserDTO, error) {
+	query := `SELECT id, login, password FROM auth_user WHERE username=$1`
 	var existingUser domain.UserDTO
-	err := r.db.QueryRowxContext(ctx, query, username).StructScan(&existingUser)
+	err := r.db.QueryRowxContext(ctx, query, login).StructScan(&existingUser)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, ErrUserDoesNotExist
 	}

@@ -2,7 +2,7 @@ package domain
 
 type UserDTO struct {
 	ID       int    `db:"id"`
-	Username string `db:"username"`
+	Login    string `db:"login"`
 	Password string `db:"password"`
 }
 

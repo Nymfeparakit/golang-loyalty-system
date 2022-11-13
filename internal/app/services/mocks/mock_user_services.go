@@ -49,10 +49,10 @@ func (mr *MockUserRepositoryMockRecorder) CreateUser(ctx, user interface{}) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockUserRepository)(nil).CreateUser), ctx, user)
 }
 
-// GetUserByUsername mocks base method.
-func (m *MockUserRepository) GetUserByUsername(ctx context.Context, username string) (*domain.UserDTO, error) {
+// GetUserByLogin mocks base method.
+func (m *MockUserRepository) GetUserByLogin(ctx context.Context, username string) (*domain.UserDTO, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUserByUsername", ctx, username)
+	ret := m.ctrl.Call(m, "GetUserByLogin", ctx, username)
 	ret0, _ := ret[0].(*domain.UserDTO)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
@@ -61,7 +61,7 @@ func (m *MockUserRepository) GetUserByUsername(ctx context.Context, username str
 // GetUserByUsername indicates an expected call of GetUserByUsername.
 func (mr *MockUserRepositoryMockRecorder) GetUserByUsername(ctx, username interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByUsername", reflect.TypeOf((*MockUserRepository)(nil).GetUserByUsername), ctx, username)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByLogin", reflect.TypeOf((*MockUserRepository)(nil).GetUserByLogin), ctx, username)
 }
 
 // IncreaseBalanceForOrder mocks base method.

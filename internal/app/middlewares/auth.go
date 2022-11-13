@@ -11,7 +11,7 @@ import (
 )
 
 type UserService interface {
-	GetUserByUsername(ctx context.Context, username string) (*domain.UserDTO, error)
+	GetUserByLogin(ctx context.Context, username string) (*domain.UserDTO, error)
 }
 
 type AuthService interface {
@@ -42,7 +42,7 @@ func TokenAuthMiddleware(userService UserService, authService AuthService) gin.H
 			c.AbortWithStatus(http.StatusInternalServerError)
 		}
 
-		user, err := userService.GetUserByUsername(c.Request.Context(), username)
+		user, err := userService.GetUserByLogin(c.Request.Context(), username)
 		if errors.Is(err, services.ErrUserDoesNotExist) {
 			c.AbortWithStatus(http.StatusUnauthorized)
 			return

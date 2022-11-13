@@ -43,7 +43,7 @@ func TestRegistrationHandler_HandleRegistration(t *testing.T) {
 			},
 			shouldCallRegService: true,
 			regInput: registrationInput{
-				Username: "John",
+				Login:    "John",
 				Password: "123",
 			},
 		},
@@ -56,7 +56,7 @@ func TestRegistrationHandler_HandleRegistration(t *testing.T) {
 			},
 			shouldCallRegService: true,
 			regInput: registrationInput{
-				Username: "John",
+				Login:    "John",
 				Password: "123",
 			},
 		},
@@ -68,14 +68,14 @@ func TestRegistrationHandler_HandleRegistration(t *testing.T) {
 			},
 			shouldCallRegService: false,
 			regInput: registrationInput{
-				Username: "John",
+				Login: "John",
 			},
 		},
 		{
 			name: "invalid input - no username field",
 			want: WantResponse{
 				statusCode: http.StatusBadRequest,
-				response:   `{"errors":"Key: 'registrationInput.Username' Error:Field validation for 'Username' failed on the 'required' tag"}`,
+				response:   `{"errors":"Key: 'registrationInput.Login' Error:Field validation for 'Login' failed on the 'required' tag"}`,
 			},
 			shouldCallRegService: false,
 			regInput: registrationInput{
@@ -97,7 +97,7 @@ func TestRegistrationHandler_HandleRegistration(t *testing.T) {
 			defer ctrl.Finish()
 			regServiceMock := mock_handlers.NewMockRegistrationService(ctrl)
 			if tt.shouldCallRegService {
-				user := domain.UserDTO{Username: tt.regInput.Username, Password: tt.regInput.Password}
+				user := domain.UserDTO{Login: tt.regInput.Login, Password: tt.regInput.Password}
 				regServiceMock.EXPECT().RegisterUser(request.Context(), user).Return(tt.registerUserRes, tt.registerUserErr)
 			}
 			r := gin.Default()
@@ -126,7 +126,7 @@ func TestLoginHandler_HandleLogin(t *testing.T) {
 
 	tokenValue := "123"
 	logInput := loginInput{
-		Username: "John",
+		Login:    "John",
 		Password: "123",
 	}
 	tests := []struct {
@@ -172,7 +172,7 @@ func TestLoginHandler_HandleLogin(t *testing.T) {
 			serviceMock := mock_handlers.NewMockAuthService(ctrl)
 			if tt.shouldCallAuthService {
 				serviceMock.EXPECT().AuthenticateUser(
-					request.Context(), tt.logInput.Username, tt.logInput.Password,
+					request.Context(), tt.logInput.Login, tt.logInput.Password,
 				).Return(tt.authUserRes, tt.authUserErr)
 			}
 
