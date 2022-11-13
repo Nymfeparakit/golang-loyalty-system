@@ -13,7 +13,6 @@ import (
 type OrderService interface {
 	GetOrCreateOrder(ctx context.Context, orderToCreate domain.OrderDTO) (*domain.OrderDTO, bool, error)
 	GetOrdersByUser(ctx context.Context, user *domain.UserDTO) ([]*domain.OrderDTO, error)
-	UpdateOrdersStatusesByNumber(ctx context.Context, orders []domain.OrderDTO) error
 }
 
 type OrderNumberValidator interface {
@@ -93,19 +92,4 @@ func (h *OrderHandler) HandleListOrders(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, orders)
-}
-
-func (h *OrderHandler) CheckUpdatingOrdersStatus(c *gin.Context) {
-	orders := []domain.OrderDTO{
-		{
-			Status: "PROCESSED",
-			Number: "10001",
-		},
-		{
-			Status: "PROCESSED",
-			Number: "10002",
-		},
-	}
-
-	h.orderService.UpdateOrdersStatusesByNumber(c.Request.Context(), orders)
 }

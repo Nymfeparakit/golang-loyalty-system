@@ -32,7 +32,6 @@ func InitRouter(db *sqlx.DB, config *configs.Config) *gin.Engine {
 	orderHandler := NewOrderHandler(authService, orderService, orderNumberValidator)
 	needAuthURLsGroup.POST("/user/orders", orderHandler.HandleCreateOrder)
 	needAuthURLsGroup.GET("/user/orders", orderHandler.HandleListOrders)
-	needAuthURLsGroup.GET("/check-updating", orderHandler.CheckUpdatingOrdersStatus)
 
 	requestsWorker := workers.NewRateLimitedReqWorker()
 	go requestsWorker.ProcessRequests()
