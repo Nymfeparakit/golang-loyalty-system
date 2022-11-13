@@ -34,5 +34,5 @@ func main() {
 	defer db.Close()
 
 	router := handlers.InitRouter(db, cfg)
-	router.Run(":8000")
+	router.Run(cfg.RunAddr)
 }
