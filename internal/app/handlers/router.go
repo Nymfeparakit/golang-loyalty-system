@@ -16,7 +16,7 @@ func InitRouter(db *sqlx.DB, config *configs.Config) *gin.Engine {
 	userService := services.NewUserService(userRepository)
 	registrationService := services.NewRegistrationService(userService)
 	authService := services.NewAuthService(userService)
-	registrationHandler := NewRegistrationHandler(registrationService, authService)
+	registrationHandler := NewRegistrationHandler(registrationService)
 	r.POST("/api/user/register", registrationHandler.HandleRegistration)
 
 	loginHandler := NewLoginHandler(authService)

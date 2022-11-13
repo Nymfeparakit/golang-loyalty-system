@@ -9,15 +9,28 @@ import (
 )
 
 type RegistrationService struct {
-	userService *UserService
+	userService  *UserService
+	tokenService *AuthJWTTokenService
 }
 
 func NewRegistrationService(userService *UserService) *RegistrationService {
 	return &RegistrationService{userService: userService}
 }
 
-func (s *RegistrationService) RegisterUser(ctx context.Context, user domain.UserDTO) error {
-	return s.userService.CreateUser(ctx, user)
+func (s *RegistrationService) RegisterUser(ctx context.Context, user domain.UserDTO) (*domain.TokenData, error) {
+	err := s.userService.CreateUser(ctx, user)
+	if err != nil {
+		return nil, err
+	}
+
+	// генерируем токены для пользователя
+	tokenString, err := s.tokenService.generateAuthToken(user.Username)
+	if err != nil {
+		return nil, err
+	}
+
+	tokenData := domain.TokenData{Token: tokenString}
+	return &tokenData, nil
 }
 
 type UserCtxKey string

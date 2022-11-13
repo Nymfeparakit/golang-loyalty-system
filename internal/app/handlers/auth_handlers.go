@@ -11,7 +11,7 @@ import (
 )
 
 type RegistrationService interface {
-	RegisterUser(ctx context.Context, user domain.UserDTO) error
+	RegisterUser(ctx context.Context, user domain.UserDTO) (*domain.TokenData, error)
 }
 
 type AuthService interface {
@@ -21,11 +21,10 @@ type AuthService interface {
 
 type RegistrationHandler struct {
 	registrationService RegistrationService
-	authService         AuthService
 }
 
-func NewRegistrationHandler(regService RegistrationService, authService AuthService) *RegistrationHandler {
-	return &RegistrationHandler{registrationService: regService, authService: authService}
+func NewRegistrationHandler(regService RegistrationService) *RegistrationHandler {
+	return &RegistrationHandler{registrationService: regService}
 }
 
 func (h *RegistrationHandler) HandleRegistration(c *gin.Context) {
@@ -40,16 +39,10 @@ func (h *RegistrationHandler) HandleRegistration(c *gin.Context) {
 		Username: input.Username,
 		Password: input.Password,
 	}
-	err := h.registrationService.RegisterUser(c.Request.Context(), userDTO)
+	tokenData, err := h.registrationService.RegisterUser(c.Request.Context(), userDTO)
 	// todo: импортировать ошибку не из repositories?
 	if errors.Is(err, repositories.ErrUserAlreadyExists) {
 		c.JSON(http.StatusConflict, gin.H{"errors": "User with given login already exists"})
-		return
-	}
-
-	tokenData, err := h.authService.AuthenticateUser(c.Request.Context(), input.Username, input.Password)
-	if errors.Is(err, services.ErrInvalidCredentials) {
-		c.JSON(http.StatusUnauthorized, gin.H{"errors": "Invalid login or password"})
 		return
 	}
 	if err != nil {

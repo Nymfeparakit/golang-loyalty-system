@@ -36,11 +36,12 @@ func (m *MockRegistrationService) EXPECT() *MockRegistrationServiceMockRecorder 
 }
 
 // RegisterUser mocks base method.
-func (m *MockRegistrationService) RegisterUser(arg0 context.Context, arg1 domain.UserDTO) error {
+func (m *MockRegistrationService) RegisterUser(arg0 context.Context, arg1 domain.UserDTO) (*domain.TokenData, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RegisterUser", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(*domain.TokenData)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // RegisterUser indicates an expected call of RegisterUser.

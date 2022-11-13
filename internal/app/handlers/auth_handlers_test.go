@@ -19,25 +19,29 @@ import (
 func TestRegistrationHandler_HandleRegistration(t *testing.T) {
 	// ожидаемый ответ от сервера
 	type WantResponse struct {
-		statusCode int
-		response   string
+		statusCode  int
+		response    string
+		tokenHeader string
 	}
 
+	tokenValue := "123"
 	tests := []struct {
-		name                  string
-		want                  WantResponse
-		registerUserRes       error
-		shouldCallUserService bool
-		regInput              registrationInput
+		name                 string
+		want                 WantResponse
+		registerUserRes      *domain.TokenData
+		registerUserErr      error
+		shouldCallRegService bool
+		regInput             registrationInput
 	}{
 		{
 			name:            "positive test",
-			registerUserRes: nil,
+			registerUserRes: &domain.TokenData{Token: tokenValue},
 			want: WantResponse{
-				statusCode: http.StatusOK,
-				response:   `User successfully registered`,
+				statusCode:  http.StatusOK,
+				response:    `User successfully registered`,
+				tokenHeader: tokenValue,
 			},
-			shouldCallUserService: true,
+			shouldCallRegService: true,
 			regInput: registrationInput{
 				Username: "John",
 				Password: "123",
@@ -45,12 +49,12 @@ func TestRegistrationHandler_HandleRegistration(t *testing.T) {
 		},
 		{
 			name:            "user with login exists",
-			registerUserRes: repositories.ErrUserAlreadyExists,
+			registerUserErr: repositories.ErrUserAlreadyExists,
 			want: WantResponse{
 				statusCode: http.StatusConflict,
 				response:   `{"errors":"User with given login already exists"}`,
 			},
-			shouldCallUserService: true,
+			shouldCallRegService: true,
 			regInput: registrationInput{
 				Username: "John",
 				Password: "123",
@@ -62,7 +66,7 @@ func TestRegistrationHandler_HandleRegistration(t *testing.T) {
 				statusCode: http.StatusBadRequest,
 				response:   `{"errors":"Key: 'registrationInput.Password' Error:Field validation for 'Password' failed on the 'required' tag"}`,
 			},
-			shouldCallUserService: false,
+			shouldCallRegService: false,
 			regInput: registrationInput{
 				Username: "John",
 			},
@@ -73,7 +77,7 @@ func TestRegistrationHandler_HandleRegistration(t *testing.T) {
 				statusCode: http.StatusBadRequest,
 				response:   `{"errors":"Key: 'registrationInput.Username' Error:Field validation for 'Username' failed on the 'required' tag"}`,
 			},
-			shouldCallUserService: false,
+			shouldCallRegService: false,
 			regInput: registrationInput{
 				Password: "123",
 			},
@@ -91,14 +95,13 @@ func TestRegistrationHandler_HandleRegistration(t *testing.T) {
 			// создаем хэндлер, в который помещаем мок хранилища и настроек
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
-			serviceMock := mock_handlers.NewMockRegistrationService(ctrl)
-			if tt.shouldCallUserService {
+			regServiceMock := mock_handlers.NewMockRegistrationService(ctrl)
+			if tt.shouldCallRegService {
 				user := domain.UserDTO{Username: tt.regInput.Username, Password: tt.regInput.Password}
-				serviceMock.EXPECT().RegisterUser(request.Context(), user).Return(tt.registerUserRes)
+				regServiceMock.EXPECT().RegisterUser(request.Context(), user).Return(tt.registerUserRes, tt.registerUserErr)
 			}
-
 			r := gin.Default()
-			registrationHandler := NewRegistrationHandler(serviceMock)
+			registrationHandler := NewRegistrationHandler(regServiceMock)
 			r.POST("/", registrationHandler.HandleRegistration)
 			r.ServeHTTP(w, request)
 			result := w.Result()
@@ -107,6 +110,7 @@ func TestRegistrationHandler_HandleRegistration(t *testing.T) {
 
 			// проверяем http статус ответа и тело ответа
 			assert.Equal(t, tt.want.statusCode, w.Code)
+			assert.Equal(t, tt.want.tokenHeader, result.Header.Get("Authorization"))
 			assert.Equal(t, tt.want.response, w.Body.String())
 		})
 	}
@@ -115,10 +119,16 @@ func TestRegistrationHandler_HandleRegistration(t *testing.T) {
 func TestLoginHandler_HandleLogin(t *testing.T) {
 	// ожидаемый ответ от сервера
 	type WantResponse struct {
-		statusCode int
-		response   string
+		statusCode  int
+		response    string
+		tokenHeader string
 	}
 
+	tokenValue := "123"
+	logInput := loginInput{
+		Username: "John",
+		Password: "123",
+	}
 	tests := []struct {
 		name                  string
 		want                  WantResponse
@@ -129,16 +139,12 @@ func TestLoginHandler_HandleLogin(t *testing.T) {
 	}{
 		{
 			name:        "positive test",
-			authUserRes: &domain.TokenData{Token: "123"},
+			authUserRes: &domain.TokenData{Token: tokenValue},
 			want: WantResponse{
 				statusCode: http.StatusOK,
-				response:   `{"token":"123"}`,
 			},
 			shouldCallAuthService: true,
-			logInput: loginInput{
-				Username: "John",
-				Password: "123",
-			},
+			logInput:              logInput,
 		},
 		{
 			name:        "invalid credentials",
@@ -148,10 +154,7 @@ func TestLoginHandler_HandleLogin(t *testing.T) {
 				response:   `{"errors":"Invalid login or password"}`,
 			},
 			shouldCallAuthService: true,
-			logInput: loginInput{
-				Username: "John",
-				Password: "123",
-			},
+			logInput:              logInput,
 		},
 	}
 
