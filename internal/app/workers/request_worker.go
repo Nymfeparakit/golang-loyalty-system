@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/rs/zerolog/log"
+	"gophermart/internal/app/domain"
+	"io"
 	"net/http"
 	"time"
 )
@@ -14,7 +16,7 @@ const respChTimeout = 5 * time.Second
 type RequestWithResponseCh struct {
 	ctx    context.Context
 	req    *http.Request
-	respCh chan *http.Response
+	respCh chan *domain.ResponseWithReadBody
 }
 
 type RateLimitedReqWorker struct {
@@ -27,15 +29,15 @@ func NewRateLimitedReqWorker() *RateLimitedReqWorker {
 	return &RateLimitedReqWorker{reqCh: reqCh}
 }
 
-func (w *RateLimitedReqWorker) HandleRequest(ctx context.Context, req *http.Request) (*http.Response, error) {
+func (w *RateLimitedReqWorker) HandleRequest(ctx context.Context, req *http.Request) (*domain.ResponseWithReadBody, error) {
 	log.Info().Msg(fmt.Sprintf("starting handling new request: %v", req))
-	respCh := make(chan *http.Response)
+	respCh := make(chan *domain.ResponseWithReadBody)
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	w.reqCh <- RequestWithResponseCh{req: req, respCh: respCh, ctx: ctx}
 	defer close(respCh)
 
-	var resp *http.Response
+	var resp *domain.ResponseWithReadBody
 	select {
 	case r := <-respCh:
 		resp = r
@@ -65,11 +67,18 @@ func (w *RateLimitedReqWorker) executeRequest(req RequestWithResponseCh) {
 		// todo: what to do here?
 		log.Error().Msg(fmt.Sprintf("failed to make request to AS: %v", err.Error()))
 	}
+	defer resp.Body.Close()
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		// todo: what to do here?
+		log.Error().Msg(fmt.Sprintf("failed to make request to AS: %v", err.Error()))
+	}
+	responseWithBody := &domain.ResponseWithReadBody{ReadBody: bodyBytes, Response: resp}
 
 	select {
 	case <-req.ctx.Done():
 		return
 	default:
-		req.respCh <- resp
+		req.respCh <- responseWithBody
 	}
 }

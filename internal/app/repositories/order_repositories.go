@@ -62,6 +62,11 @@ func (r *OrderRepository) GetOrdersByUser(ctx context.Context, user *domain.User
 		orders = append(orders, &order)
 	}
 
+	err = rows.Err()
+	if err != nil {
+		return orders, err
+	}
+
 	return orders, nil
 }
 

@@ -7,13 +7,12 @@ import (
 	"fmt"
 	"github.com/rs/zerolog/log"
 	"gophermart/internal/app/domain"
-	"io"
 	"net/http"
 	"strconv"
 )
 
 type RequestsWorker interface {
-	HandleRequest(ctx context.Context, req *http.Request) (*http.Response, error)
+	HandleRequest(ctx context.Context, req *http.Request) (*domain.ResponseWithReadBody, error)
 }
 
 type AccrualCalculationService struct {
@@ -43,17 +42,16 @@ func (s *AccrualCalculationService) CreateOrderForCalculation(orderNumber string
 		return err
 	}
 	res, err := s.requestsWorker.HandleRequest(context.Background(), req)
-	defer res.Body.Close()
 	if err != nil {
 		return err
 	}
-	if res.StatusCode != http.StatusAccepted {
-		bodyBytes, err := io.ReadAll(res.Body)
+	respStatusCode := res.Response.StatusCode
+	if respStatusCode != http.StatusAccepted {
 		if err != nil {
 			return err
 		}
-		respBody := string(bodyBytes)
-		return fmt.Errorf("creating order for accrual calculation failed: status code - %d, body - %v", res.StatusCode, respBody)
+		respBody := string(res.ReadBody)
+		return fmt.Errorf("creating order for accrual calculation failed: status code - %d, body - %v", respStatusCode, respBody)
 	}
 
 	return nil
@@ -72,14 +70,15 @@ func (s *AccrualCalculationService) GetOrderAccrualRes(orderNumber string) (*dom
 		log.Error().Msg("request to accrual system failed: " + err.Error())
 		return nil, err
 	}
-	if res.StatusCode != http.StatusOK {
-		log.Error().Msg("request to accrual system failed: status of response - " + strconv.Itoa(res.StatusCode))
+	respStatusCode := res.Response.StatusCode
+	if respStatusCode != http.StatusOK {
+		log.Error().Msg("request to accrual system failed: status of response - " + strconv.Itoa(respStatusCode))
 		return nil, err
 	}
 
 	var accrualRes domain.AccrualCalculationRes
-	log.Info().Msg(fmt.Sprintf("accrual result is: %v", res.Body))
-	err = json.NewDecoder(res.Body).Decode(&accrualRes)
+	log.Info().Msg(fmt.Sprintf("accrual result is: %v", res.ReadBody))
+	err = json.NewDecoder(bytes.NewReader(res.ReadBody)).Decode(&accrualRes)
 	if err != nil {
 		log.Error().Msg("request to accrual system failed: " + err.Error())
 		return nil, err
