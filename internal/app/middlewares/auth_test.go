@@ -93,6 +93,8 @@ func TestTokenAuthMiddleware(t *testing.T) {
 
 			router.ServeHTTP(w, request)
 			result := w.Result()
+			err = result.Body.Close()
+			require.NoError(t, err)
 			assert.Equal(t, tt.wantStatusCode, result.StatusCode)
 		})
 	}

@@ -44,9 +44,9 @@ func (r *OrderRepository) GetOrCreateOrder(ctx context.Context, orderToCreate do
 
 func (r *OrderRepository) GetOrdersByUser(ctx context.Context, user *domain.UserDTO) ([]*domain.OrderDTO, error) {
 	query := `SELECT * FROM user_order WHERE user_id=$1  ORDER BY uploaded_at`
-	rows, err := r.db.QueryxContext(ctx, query, user.ID)
 	var orders []*domain.OrderDTO
-	if err == sql.ErrNoRows {
+	rows, err := r.db.QueryxContext(ctx, query, user.ID)
+	if errors.Is(err, sql.ErrNoRows) {
 		return orders, nil
 	}
 	if err != nil {

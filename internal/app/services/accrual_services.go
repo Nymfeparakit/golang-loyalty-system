@@ -43,6 +43,7 @@ func (s *AccrualCalculationService) CreateOrderForCalculation(orderNumber string
 		return err
 	}
 	res, err := s.requestsWorker.HandleRequest(context.Background(), req)
+	defer res.Body.Close()
 	if err != nil {
 		return err
 	}

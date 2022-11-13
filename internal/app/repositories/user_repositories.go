@@ -36,7 +36,7 @@ func (r *UserRepository) GetUserByUsername(ctx context.Context, username string)
 	query := `SELECT id, username, password FROM auth_user WHERE username=$1`
 	var existingUser domain.UserDTO
 	err := r.db.QueryRowxContext(ctx, query, username).StructScan(&existingUser)
-	if errors.As(err, &sql.ErrNoRows) {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, ErrUserDoesNotExist
 	}
 	if err != nil {

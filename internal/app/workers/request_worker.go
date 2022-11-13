@@ -48,17 +48,18 @@ func (w *RateLimitedReqWorker) HandleRequest(ctx context.Context, req *http.Requ
 
 func (w *RateLimitedReqWorker) ProcessRequests() {
 	log.Info().Msg("reqs worker: waiting for new requests")
-	throttle := time.Tick(reqsRate)
+	ticker := time.NewTicker(reqsRate)
+	defer ticker.Stop()
 	for {
 		req := <-w.reqCh
-		<-throttle
+		<-ticker.C
 		go w.executeRequest(req)
 	}
 }
 
 func (w *RateLimitedReqWorker) executeRequest(req RequestWithResponseCh) {
 	client := http.DefaultClient
-	log.Info().Msg(fmt.Sprintf(fmt.Sprintf("executing request: %v", req)))
+	log.Info().Msg(fmt.Sprintf("executing request: %v", req))
 	resp, err := client.Do(req.req)
 	if err != nil {
 		// todo: what to do here?
