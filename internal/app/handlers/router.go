@@ -15,12 +15,12 @@ func InitRouter(db *sqlx.DB, config *configs.Config) *gin.Engine {
 	userRepository := repositories.NewUserRepository(db)
 	userService := services.NewUserService(userRepository)
 	registrationService := services.NewRegistrationService(userService)
-	registrationHandler := NewRegistrationHandler(registrationService)
-	r.POST("/register", registrationHandler.HandleRegistration)
-
 	authService := services.NewAuthService(userService)
+	registrationHandler := NewRegistrationHandler(registrationService, authService)
+	r.POST("/api/user/register", registrationHandler.HandleRegistration)
+
 	loginHandler := NewLoginHandler(authService)
-	r.POST("/login", loginHandler.HandleLogin)
+	r.POST("/api/user/login", loginHandler.HandleLogin)
 
 	needAuthURLsGroup := r.Group("")
 	needAuthURLsGroup.Use(middlewares.TokenAuthMiddleware(userService, authService))
@@ -30,8 +30,8 @@ func InitRouter(db *sqlx.DB, config *configs.Config) *gin.Engine {
 	orderService := services.NewOrderService(orderRepository, ordersCh)
 	orderNumberValidator := services.NewOrderNumberValidator()
 	orderHandler := NewOrderHandler(authService, orderService, orderNumberValidator)
-	needAuthURLsGroup.POST("/user/orders", orderHandler.HandleCreateOrder)
-	needAuthURLsGroup.GET("/user/orders", orderHandler.HandleListOrders)
+	needAuthURLsGroup.POST("/api/user/orders", orderHandler.HandleCreateOrder)
+	needAuthURLsGroup.GET("/api/user/orders", orderHandler.HandleListOrders)
 
 	requestsWorker := workers.NewRateLimitedReqWorker()
 	go requestsWorker.ProcessRequests()

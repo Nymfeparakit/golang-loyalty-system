@@ -14,12 +14,18 @@ type RegistrationService interface {
 	RegisterUser(ctx context.Context, user domain.UserDTO) error
 }
 
-type RegistrationHandler struct {
-	registrationService RegistrationService
+type AuthService interface {
+	AuthenticateUser(ctx context.Context, username string, password string) (*domain.TokenData, error)
+	GetUserFromContext(ctx context.Context) (*domain.UserDTO, bool)
 }
 
-func NewRegistrationHandler(authService RegistrationService) *RegistrationHandler {
-	return &RegistrationHandler{registrationService: authService}
+type RegistrationHandler struct {
+	registrationService RegistrationService
+	authService         AuthService
+}
+
+func NewRegistrationHandler(regService RegistrationService, authService AuthService) *RegistrationHandler {
+	return &RegistrationHandler{registrationService: regService, authService: authService}
 }
 
 func (h *RegistrationHandler) HandleRegistration(c *gin.Context) {
@@ -41,12 +47,17 @@ func (h *RegistrationHandler) HandleRegistration(c *gin.Context) {
 		return
 	}
 
-	c.String(http.StatusOK, "User successfully registered")
-}
+	tokenData, err := h.authService.AuthenticateUser(c.Request.Context(), input.Username, input.Password)
+	if errors.Is(err, services.ErrInvalidCredentials) {
+		c.JSON(http.StatusUnauthorized, gin.H{"errors": "Invalid login or password"})
+		return
+	}
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+	}
 
-type AuthService interface {
-	AuthenticateUser(ctx context.Context, username string, password string) (*domain.TokenData, error)
-	GetUserFromContext(ctx context.Context) (*domain.UserDTO, bool)
+	c.Header("Authorization", tokenData.Token)
+	c.String(http.StatusOK, "User successfully registered")
 }
 
 type LoginHandler struct {
@@ -70,6 +81,10 @@ func (h *LoginHandler) HandleLogin(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"errors": "Invalid login or password"})
 		return
 	}
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+	}
 
-	c.JSON(http.StatusOK, tokenData)
+	c.Header("Authorization", tokenData.Token)
+	c.Status(http.StatusOK)
 }

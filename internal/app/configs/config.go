@@ -17,7 +17,7 @@ func InitFlags(cfg *Config) {
 	flag.StringVar(
 		&cfg.AccrualSystemAddr, "r", cfg.AccrualSystemAddr, "Address of the accrual calculation system",
 	)
-	flag.StringVar(&cfg.RunAddr, "a", cfg.RunAddr, "Service address adn port")
+	flag.StringVar(&cfg.RunAddr, "a", cfg.RunAddr, "Service address and port")
 	flag.StringVar(&cfg.DatabaseURI, "d", cfg.DatabaseURI, "Database connection address")
 }
 
