@@ -33,7 +33,7 @@ func (r *UserRepository) CreateUser(ctx context.Context, user domain.UserDTO) er
 }
 
 func (r *UserRepository) GetUserByLogin(ctx context.Context, login string) (*domain.UserDTO, error) {
-	query := `SELECT id, login, password FROM auth_user WHERE username=$1`
+	query := `SELECT id, login, password FROM auth_user WHERE login=$1`
 	var existingUser domain.UserDTO
 	err := r.db.QueryRowxContext(ctx, query, login).StructScan(&existingUser)
 	if errors.Is(err, sql.ErrNoRows) {
