@@ -19,6 +19,7 @@ func createSchema(db *sqlx.DB) error {
 		id serial primary key not null,
 		login varchar(64) not null,
 		password varchar(128) not null,
+    	balance double precision not null default 0,
 		constraint login_unique unique (login)
 		);`,
 		`create table if not exists user_order(
@@ -26,7 +27,6 @@ func createSchema(db *sqlx.DB) error {
 		 uploaded_at timestamptz not null,
 		 user_id int not null,
 		 status varchar not null default 'NEW',
-    	 balance double precision not null default 0,
 		 constraint fk_user foreign key(user_id) references auth_user(id),
 		 constraint status_values check (status IN ('NEW', 'PROCESSING', 'INVALID', 'PROCESSED'))
 		);`,
