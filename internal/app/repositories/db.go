@@ -26,6 +26,7 @@ func createSchema(db *sqlx.DB) error {
 		 uploaded_at timestamptz not null,
 		 user_id int not null,
 		 status varchar not null default 'NEW',
+    	 balance double precision not null default 0,
 		 constraint fk_user foreign key(user_id) references auth_user(id),
 		 constraint status_values check (status IN ('NEW', 'PROCESSING', 'INVALID', 'PROCESSED'))
 		);`,
