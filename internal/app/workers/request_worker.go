@@ -64,14 +64,14 @@ func (w *RateLimitedReqWorker) executeRequest(req RequestWithResponseCh) {
 	log.Info().Msg(fmt.Sprintf("executing request: %v", req))
 	resp, err := client.Do(req.req)
 	if err != nil {
-		// todo: what to do here?
 		log.Error().Msg(fmt.Sprintf("failed to make request to AS: %v", err.Error()))
+		return
 	}
 	defer resp.Body.Close()
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		// todo: what to do here?
 		log.Error().Msg(fmt.Sprintf("failed to make request to AS: %v", err.Error()))
+		return
 	}
 	responseWithBody := &domain.ResponseWithReadBody{ReadBody: bodyBytes, Response: resp}
 

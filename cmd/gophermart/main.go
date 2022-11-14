@@ -3,19 +3,10 @@ package main
 import (
 	"fmt"
 	_ "github.com/jackc/pgx/stdlib"
-	"github.com/jmoiron/sqlx"
 	"gophermart/internal/app/configs"
 	"gophermart/internal/app/handlers"
+	"gophermart/internal/app/repositories"
 )
-
-func initDB(connStr string) (*sqlx.DB, error) {
-	db, err := sqlx.Open("pgx", connStr)
-	if err != nil {
-		fmt.Println(err.Error())
-		return nil, err
-	}
-	return db, nil
-}
 
 func main() {
 	// загружаем настройки
@@ -26,7 +17,7 @@ func main() {
 	}
 
 	// Подключаемся к БД
-	db, err := initDB(cfg.DatabaseURI)
+	db, err := repositories.InitDB(cfg.DatabaseURI)
 	if err != nil {
 		fmt.Println(err.Error())
 		return
