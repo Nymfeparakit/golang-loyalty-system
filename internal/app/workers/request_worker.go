@@ -25,7 +25,6 @@ type RateLimitedReqWorker struct {
 }
 
 func NewRateLimitedReqWorker() *RateLimitedReqWorker {
-	// todo: should be buffered?
 	reqCh := make(chan RequestWithResponseCh)
 	return &RateLimitedReqWorker{reqCh: reqCh}
 }

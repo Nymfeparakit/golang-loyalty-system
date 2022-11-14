@@ -63,9 +63,6 @@ func (w *OrderAccrualWorker) processOrder(orderNumber string) (bool, error) {
 		return false, err
 	}
 
-	// todo: remove this line, should take accrual value from system
-	//rand.Seed(time.Now().UnixNano())
-	//accrualRes.Accrual = rand.Intn(501)
 	// если заказ оказался обработанным, то прибавляем пользователю баланс по этому заказу
 	if newOrderStatus == domain.OrderProcessedStatus && accrualRes.Accrual != 0 {
 		log.Info().Msg(fmt.Sprintf("increasing balance for order '%s', accrual - %f", orderNumber, accrualRes.Accrual))
