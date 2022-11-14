@@ -19,6 +19,7 @@ type RequestWithResponseCh struct {
 	respCh chan *domain.ResponseWithReadBody
 }
 
+// RateLimitedReqWorker получает и затем отправляет переданные ему запросы с учетом заданного лимита на эти запросы
 type RateLimitedReqWorker struct {
 	reqCh chan RequestWithResponseCh
 }
@@ -31,6 +32,7 @@ func NewRateLimitedReqWorker() *RateLimitedReqWorker {
 
 func (w *RateLimitedReqWorker) HandleRequest(ctx context.Context, req *http.Request) (*domain.ResponseWithReadBody, error) {
 	log.Info().Msg(fmt.Sprintf("starting handling new request: %v", req))
+	// создаем канал, в котором будет ожидать ответа на текущий request
 	respCh := make(chan *domain.ResponseWithReadBody)
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -76,6 +78,7 @@ func (w *RateLimitedReqWorker) executeRequest(req RequestWithResponseCh) {
 	responseWithBody := &domain.ResponseWithReadBody{ReadBody: bodyBytes, Response: resp}
 
 	select {
+	// если контекст был отменен, то отправлять ответ уже не нужно
 	case <-req.ctx.Done():
 		return
 	default:

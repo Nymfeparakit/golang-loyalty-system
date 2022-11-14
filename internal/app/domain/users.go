@@ -8,5 +8,4 @@ type UserDTO struct {
 
 type TokenData struct {
 	Token string `json:"token"`
-	// todo: add expires field
 }

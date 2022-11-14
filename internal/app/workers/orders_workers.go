@@ -44,6 +44,9 @@ func NewOrderAccrualWorker(
 	}
 }
 
+// processOrder проверяем статус заказа с номером orderNumber
+// если заказ был обработан, то пополняет баланс пользователя
+// возвращает флаг processed, указывающий на то, был ли обработан заказ
 func (w *OrderAccrualWorker) processOrder(orderNumber string) (bool, error) {
 	// получаем сведения по начислению баллов за заказ
 	accrualRes, err := w.accrualCalculator.GetOrderAccrualRes(orderNumber)
@@ -80,6 +83,8 @@ func (w *OrderAccrualWorker) processOrder(orderNumber string) (bool, error) {
 	return false, nil
 }
 
+// processOrders поочередно берет заказы из списка необработанных заказов
+// и для каждого проверяет статус
 func (w *OrderAccrualWorker) processOrders() error {
 	log.Info().Msg(fmt.Sprintf("processing orders list: %v", w.unprocessedOrders))
 	var tmpOrders []string
@@ -101,6 +106,7 @@ func (w *OrderAccrualWorker) processOrders() error {
 
 func (w *OrderAccrualWorker) getOrdersAccrual() {
 	for {
+		// если необработанных заказов нет, то просто ожидаем, когда придет новый заказ
 		if len(w.unprocessedOrders) == 0 {
 			log.Info().Msg("waiting for new order number")
 			orderNumber := <-w.ordersCh
