@@ -46,7 +46,7 @@ func (r *UserRepository) GetUserByLogin(ctx context.Context, login string) (*dom
 	return &existingUser, nil
 }
 
-func (r *UserRepository) IncreaseBalanceForOrder(ctx context.Context, orderNumber string, accrual int) error {
+func (r *UserRepository) IncreaseBalanceForOrder(ctx context.Context, orderNumber string, accrual float32) error {
 	// находим пользователя, для которого сущесвует заказ
 	// и прибавляем ему баланс
 	query := `

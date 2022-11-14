@@ -8,7 +8,7 @@ import (
 )
 
 type UserService interface {
-	IncreaseBalanceForOrder(ctx context.Context, orderNumber string, accrual int) error
+	IncreaseBalanceForOrder(ctx context.Context, orderNumber string, accrual float32) error
 }
 
 type OrderService interface {
@@ -65,7 +65,7 @@ func (w *OrderAccrualWorker) processOrder(orderNumber string) (bool, error) {
 	//accrualRes.Accrual = rand.Intn(501)
 	// если заказ оказался обработанным, то прибавляем пользователю баланс по этому заказу
 	if newOrderStatus == domain.OrderProcessedStatus && accrualRes.Accrual != 0 {
-		log.Info().Msg(fmt.Sprintf("increasing balance for order '%s', accrual - %d", orderNumber, accrualRes.Accrual))
+		log.Info().Msg(fmt.Sprintf("increasing balance for order '%s', accrual - %f", orderNumber, accrualRes.Accrual))
 		err = w.userService.IncreaseBalanceForOrder(context.Background(), orderNumber, accrualRes.Accrual)
 		if err != nil {
 			log.Error().Msg("increasing user balance failed: " + err.Error())

@@ -39,7 +39,7 @@ func TestRegistrationHandler_HandleRegistration(t *testing.T) {
 			want: WantResponse{
 				statusCode:  http.StatusOK,
 				response:    `User successfully registered`,
-				tokenHeader: tokenValue,
+				tokenHeader: "Bearer " + tokenValue,
 			},
 			shouldCallRegService: true,
 			regInput: registrationInput{
