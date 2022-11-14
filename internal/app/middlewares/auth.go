@@ -31,7 +31,7 @@ func TokenAuthMiddleware(userService UserService, authService AuthService) gin.H
 		}
 		tokenHeaderStr := strings.Split(tokenHeader[0], " ")
 		if len(tokenHeaderStr) != 2 {
-			log.Error().Msg("failed to parse token header")
+			log.Error().Msg(fmt.Sprintf("failed to parse token header: %v", tokenHeader[0]))
 			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
