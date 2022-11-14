@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/rs/zerolog/log"
 	"gophermart/internal/app/domain"
+	"strconv"
 	"time"
 )
 
@@ -61,27 +62,26 @@ func NewOrderNumberValidator() *OrderNumberValidator {
 }
 
 func (v *OrderNumberValidator) Validate(orderNumber string) bool {
-	//isLenEven := (len(orderNumber)-1)%2 == 0
-	//numbersForSum := make([]int, len(orderNumber))
-	//for i, r := range orderNumber {
-	//	digit, err := strconv.Atoi(string(r))
-	//	if err != nil {
-	//		return false
-	//	}
-	//	isIndexEven := i%2 == 0
-	//	if isLenEven && !isIndexEven || !isLenEven && isIndexEven {
-	//		digit *= 2
-	//		if digit > 9 {
-	//			digit -= 9
-	//		}
-	//	}
-	//	numbersForSum[i] = digit
-	//}
-	//sum := 0
-	//for _, num := range numbersForSum {
-	//	sum += num
-	//}
-	//
-	//return sum%10 == 0
-	return len(orderNumber) > 0
+	isLenEven := (len(orderNumber)-1)%2 == 0
+	numbersForSum := make([]int, len(orderNumber))
+	for i, r := range orderNumber {
+		digit, err := strconv.Atoi(string(r))
+		if err != nil {
+			return false
+		}
+		isIndexEven := i%2 == 0
+		if isLenEven && !isIndexEven || !isLenEven && isIndexEven {
+			digit *= 2
+			if digit > 9 {
+				digit -= 9
+			}
+		}
+		numbersForSum[i] = digit
+	}
+	sum := 0
+	for _, num := range numbersForSum {
+		sum += num
+	}
+
+	return sum%10 == 0
 }

@@ -104,19 +104,19 @@ func (w *OrderAccrualWorker) getOrdersAccrual() {
 		if len(w.unprocessedOrders) == 0 {
 			log.Info().Msg("waiting for new order number")
 			orderNumber := <-w.ordersCh
-			if err := w.accrualCalculator.CreateOrderForCalculation(orderNumber); err != nil {
-				log.Error().Msg(fmt.Sprintf("creating order in accrual system failed: %v", err.Error()))
-				return
-			}
+			//if err := w.accrualCalculator.CreateOrderForCalculation(orderNumber); err != nil {
+			//	log.Error().Msg(fmt.Sprintf("creating order in accrual system failed: %v", err.Error()))
+			//	return
+			//}
 			w.unprocessedOrders = append(w.unprocessedOrders, orderNumber)
 		}
 		select {
 		case orderNumber := <-w.ordersCh:
 			log.Info().Msg(fmt.Sprintf("receiving new order '%s' in worker", orderNumber))
-			if err := w.accrualCalculator.CreateOrderForCalculation(orderNumber); err != nil {
-				log.Error().Msg(fmt.Sprintf("creating order in accrual system failed: %v", err.Error()))
-				return
-			}
+			//if err := w.accrualCalculator.CreateOrderForCalculation(orderNumber); err != nil {
+			//	log.Error().Msg(fmt.Sprintf("creating order in accrual system failed: %v", err.Error()))
+			//	return
+			//}
 			w.unprocessedOrders = append(w.unprocessedOrders, orderNumber)
 		default:
 			err := w.processOrders()
