@@ -35,7 +35,7 @@ func main() {
 	ordersCh := make(chan string)
 	orderService := initOrderService(db, ordersCh)
 	// Инициируем хэндлеры для ендпоинтов
-	router := handlers.InitRouter(db, orderService)
+	router := handlers.InitRouter(db, cfg, orderService)
 	// Запускаем воркеров
 	workers.InitWorkers(db, cfg, ordersCh, orderService)
 

@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"gophermart/internal/app/domain"
 	mock_handlers "gophermart/internal/app/handlers/mocks"
-	"gophermart/internal/app/repositories"
 	"gophermart/internal/app/services"
 	"net/http"
 	"net/http/httptest"
@@ -49,7 +48,7 @@ func TestRegistrationHandler_HandleRegistration(t *testing.T) {
 		},
 		{
 			name:            "user with login exists",
-			registerUserErr: repositories.ErrUserAlreadyExists,
+			registerUserErr: services.ErrUserAlreadyExists,
 			want: WantResponse{
 				statusCode: http.StatusConflict,
 				response:   `{"errors":"User with given login already exists"}`,

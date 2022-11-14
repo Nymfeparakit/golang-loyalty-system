@@ -7,7 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
 	"gophermart/internal/app/domain"
-	"gophermart/internal/app/repositories"
 	"gophermart/internal/app/services"
 	"net/http"
 )
@@ -42,8 +41,7 @@ func (h *RegistrationHandler) HandleRegistration(c *gin.Context) {
 		Password: input.Password,
 	}
 	tokenData, err := h.registrationService.RegisterUser(c.Request.Context(), userDTO)
-	// todo: импортировать ошибку не из repositories?
-	if errors.Is(err, repositories.ErrUserAlreadyExists) {
+	if errors.Is(err, services.ErrUserAlreadyExists) {
 		c.JSON(http.StatusConflict, gin.H{"errors": "User with given login already exists"})
 		return
 	}

@@ -6,6 +6,7 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 	"golang.org/x/crypto/bcrypt"
 	"gophermart/internal/app/domain"
+	"gophermart/internal/app/repositories"
 )
 
 type RegistrationService struct {
@@ -13,12 +14,15 @@ type RegistrationService struct {
 	tokenService *AuthJWTTokenService
 }
 
-func NewRegistrationService(userService *UserService) *RegistrationService {
-	return &RegistrationService{userService: userService}
+func NewRegistrationService(userService *UserService, tokenService *AuthJWTTokenService) *RegistrationService {
+	return &RegistrationService{userService: userService, tokenService: tokenService}
 }
 
 func (s *RegistrationService) RegisterUser(ctx context.Context, user domain.UserDTO) (*domain.TokenData, error) {
 	err := s.userService.CreateUser(ctx, user)
+	if errors.Is(err, repositories.ErrUserAlreadyExists) {
+		return nil, ErrUserAlreadyExists
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -40,8 +44,8 @@ type AuthService struct {
 	tokenService *AuthJWTTokenService
 }
 
-func NewAuthService(userService *UserService) *AuthService {
-	return &AuthService{userService: userService}
+func NewAuthService(userService *UserService, tokenService *AuthJWTTokenService) *AuthService {
+	return &AuthService{userService: userService, tokenService: tokenService}
 }
 
 func (s *AuthService) AuthenticateUser(ctx context.Context, login string, password string) (*domain.TokenData, error) {
@@ -100,6 +104,11 @@ type JWTClaims struct {
 }
 
 type AuthJWTTokenService struct {
+	secretKey string
+}
+
+func NewAuthJWTTokenService(secretKey string) *AuthJWTTokenService {
+	return &AuthJWTTokenService{secretKey: secretKey}
 }
 
 func (s *AuthJWTTokenService) generateAuthToken(login string) (string, error) {
@@ -109,8 +118,7 @@ func (s *AuthJWTTokenService) generateAuthToken(login string) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	// todo: ключ для подписи берем из env
-	return token.SignedString([]byte("123"))
+	return token.SignedString([]byte(s.secretKey))
 }
 
 func (s *AuthJWTTokenService) parseJWTToken(tokenString string) (string, error) {
@@ -118,7 +126,7 @@ func (s *AuthJWTTokenService) parseJWTToken(tokenString string) (string, error) 
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return "", ErrInvalidAccessToken
 		}
-		return []byte("123"), nil
+		return []byte(s.secretKey), nil
 	})
 
 	if err != nil {

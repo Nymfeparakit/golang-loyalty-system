@@ -10,6 +10,7 @@ type Config struct {
 	AccrualSystemAddr string `env:"ACCRUAL_SYSTEM_ADDRESS"`
 	RunAddr           string `env:"RUN_ADDRESS"`
 	DatabaseURI       string `env:"DATABASE_URI"`
+	AuthSecretKey     string `env:"AUTH_SECRET_KEY"`
 }
 
 // InitFlags иницирует флаги, используемые при запуске сервера
@@ -32,5 +33,10 @@ func InitConfig() (*Config, error) {
 	InitFlags(&cfg)
 	// Переписываем содержимое конфигна значениями из переданных флагов
 	flag.Parse()
+
+	// если secret_key не задан, то задаем просто рандомное значение
+	if cfg.AuthSecretKey == "" {
+		cfg.AuthSecretKey = generateRandomKey(secretKeyLen)
+	}
 	return &cfg, nil
 }
