@@ -48,7 +48,8 @@ func (s *AccrualCalculationService) CreateOrderForCalculation(orderNumber string
 	}
 
 	respStatusCode := res.Response.StatusCode
-	if respStatusCode != http.StatusAccepted {
+	// 409 статус может быть в случае, если заказ ранее уже был создан в системе начисления
+	if respStatusCode != http.StatusAccepted && respStatusCode != http.StatusConflict {
 		respBody := string(res.ReadBody)
 		return fmt.Errorf("creating order for accrual calculation failed: status code - %d, body - %v", respStatusCode, respBody)
 	}
