@@ -52,7 +52,7 @@ func (h *RegistrationHandler) HandleRegistration(c *gin.Context) {
 		c.Status(http.StatusInternalServerError)
 	}
 
-	c.Header("Authorization", tokenData.Token)
+	c.Header("Authorization", "Bearer "+tokenData.Token)
 	c.String(http.StatusOK, "User successfully registered")
 }
 
@@ -82,6 +82,6 @@ func (h *LoginHandler) HandleLogin(c *gin.Context) {
 		c.Status(http.StatusInternalServerError)
 	}
 
-	c.Header("Authorization", tokenData.Token)
+	c.Header("Authorization", "Bearer "+tokenData.Token)
 	c.Status(http.StatusOK)
 }
