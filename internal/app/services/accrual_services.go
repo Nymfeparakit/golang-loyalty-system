@@ -35,7 +35,7 @@ func (s *AccrualCalculationService) CreateOrderForCalculation(orderNumber string
 	if err != nil {
 		return err
 	}
-	
+
 	log.Info().Msg(fmt.Sprintf("making request to %s", requestURL))
 	req, err := http.NewRequest(http.MethodPost, requestURL, reqBodyReader)
 	if err != nil {
@@ -71,8 +71,9 @@ func (s *AccrualCalculationService) GetOrderAccrualRes(orderNumber string) (*dom
 	}
 	respStatusCode := res.Response.StatusCode
 	if respStatusCode != http.StatusOK {
-		log.Error().Msg("request to accrual system failed: status of response - " + strconv.Itoa(respStatusCode))
-		return nil, err
+		errMsg := "request to accrual system failed: status of response - " + strconv.Itoa(respStatusCode)
+		log.Error().Msg(errMsg)
+		return nil, fmt.Errorf(errMsg)
 	}
 
 	var accrualRes domain.AccrualCalculationRes
