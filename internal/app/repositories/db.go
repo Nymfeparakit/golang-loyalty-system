@@ -30,6 +30,14 @@ func createSchema(db *sqlx.DB) error {
 		 constraint fk_user foreign key(user_id) references auth_user(id),
 		 constraint status_values check (status IN ('NEW', 'PROCESSING', 'INVALID', 'PROCESSED'))
 		);`,
+		`create table if not exists withdrawal(
+			id serial primary key not null,
+			processed_at timestamptz not null,
+			sum double precision not null,
+			order_number varchar(64) not null,
+			constraint fk_order foreign key(order_number) references user_order(number),
+			constraint sum_value check (sum > 0)
+		);`,
 	}
 	tx, err := db.BeginTx(context.Background(), nil)
 	if err != nil {

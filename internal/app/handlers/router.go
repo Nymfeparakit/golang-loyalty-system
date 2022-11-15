@@ -16,19 +16,28 @@ func InitRouter(db *sqlx.DB, cfg *configs.Config, orderService OrderService) *gi
 	tokenService := services.NewAuthJWTTokenService(cfg.AuthSecretKey)
 	registrationService := services.NewRegistrationService(userService, tokenService)
 	authService := services.NewAuthService(userService, tokenService)
+
+	apiGroup := r.Group("/api/user")
 	registrationHandler := NewRegistrationHandler(registrationService)
-	r.POST("/api/user/register", registrationHandler.HandleRegistration)
+	apiGroup.POST("/register", registrationHandler.HandleRegistration)
 
 	loginHandler := NewLoginHandler(authService)
-	r.POST("/api/user/login", loginHandler.HandleLogin)
+	apiGroup.POST("/login", loginHandler.HandleLogin)
 
-	needAuthURLsGroup := r.Group("")
+	needAuthURLsGroup := apiGroup.Group("")
 	needAuthURLsGroup.Use(middlewares.TokenAuthMiddleware(userService, authService))
 
 	orderNumberValidator := services.NewOrderNumberValidator()
 	orderHandler := NewOrderHandler(authService, orderService, orderNumberValidator)
-	needAuthURLsGroup.POST("/api/user/orders", orderHandler.HandleCreateOrder)
-	needAuthURLsGroup.GET("/api/user/orders", orderHandler.HandleListOrders)
+	needAuthURLsGroup.POST("/orders", orderHandler.HandleCreateOrder)
+	needAuthURLsGroup.GET("/orders", orderHandler.HandleListOrders)
+
+	balanceRepository := repositories.NewBalanceRepository(db)
+	balanceService := services.NewUserBalanceService(balanceRepository)
+	balanceHandler := NewUserBalanceHandler(orderNumberValidator, authService, balanceService)
+	needAuthURLsGroup.POST("/balance/withdraw", balanceHandler.HandleWithdrawBalance)
+	needAuthURLsGroup.GET("/withdrawals", balanceHandler.HandleListBalanceWithdrawals)
+	needAuthURLsGroup.GET("/balance", balanceHandler.HandleGetUserBalance)
 
 	return r
 }
