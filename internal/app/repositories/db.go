@@ -16,19 +16,20 @@ func openConnection(connStr string) (*sqlx.DB, error) {
 func createSchema(db *sqlx.DB) error {
 	queries := []string{
 		`create table if not exists auth_user(
-		id serial primary key not null,
-		login varchar(64) not null,
-		password varchar(128) not null,
-    	balance double precision not null default 0,
-		constraint login_unique unique (login)
+    		id serial primary key not null,
+    		login varchar(64) not null,
+    		password varchar(128) not null,
+    		balance double precision not null default 0,
+    		constraint login_unique unique (login)
 		);`,
 		`create table if not exists user_order(
-		 number varchar(64) primary key,
-		 uploaded_at timestamptz not null,
-		 user_id int not null,
-		 status varchar not null default 'NEW',
-		 constraint fk_user foreign key(user_id) references auth_user(id),
-		 constraint status_values check (status IN ('NEW', 'PROCESSING', 'INVALID', 'PROCESSED'))
+			number varchar(64) primary key,
+			uploaded_at timestamptz not null,
+			user_id int not null,
+			status varchar not null default 'NEW',
+    		accrual double precision not null default 0,
+			constraint fk_user foreign key(user_id) references auth_user(id),
+			constraint status_values check (status IN ('NEW', 'PROCESSING', 'INVALID', 'PROCESSED'))
 		);`,
 		`create table if not exists withdrawal(
 			id serial primary key not null,

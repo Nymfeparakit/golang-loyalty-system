@@ -12,7 +12,7 @@ import (
 type OrderRepository interface {
 	GetOrCreateOrder(ctx context.Context, orderToCreate domain.OrderDTO) (*domain.OrderDTO, bool, error)
 	GetOrdersByUser(ctx context.Context, user *domain.UserDTO) ([]*domain.OrderDTO, error)
-	UpdateOrderStatus(ctx context.Context, orderNumber string, orderStatus string) error
+	UpdateOrderStatusAndAccrual(ctx context.Context, orderNumber string, orderStatus string, accrual float32) error
 }
 
 type OrderService struct {
@@ -50,8 +50,8 @@ func (s *OrderService) GetOrdersByUser(ctx context.Context, user *domain.UserDTO
 	return s.orderRepository.GetOrdersByUser(ctx, user)
 }
 
-func (s *OrderService) UpdateOrderStatus(ctx context.Context, orderNumber string, orderStatus string) error {
-	return s.orderRepository.UpdateOrderStatus(ctx, orderNumber, orderStatus)
+func (s *OrderService) UpdateOrderStatusAndAccrual(ctx context.Context, orderNumber string, orderStatus string, accrual float32) error {
+	return s.orderRepository.UpdateOrderStatusAndAccrual(ctx, orderNumber, orderStatus, accrual)
 }
 
 type OrderNumberValidator struct {

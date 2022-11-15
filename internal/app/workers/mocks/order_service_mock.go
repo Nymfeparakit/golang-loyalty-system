@@ -34,16 +34,16 @@ func (m *MockOrderService) EXPECT() *MockOrderServiceMockRecorder {
 	return m.recorder
 }
 
-// UpdateOrderStatus mocks base method.
-func (m *MockOrderService) UpdateOrderStatus(arg0 context.Context, arg1, arg2 string) error {
+// UpdateOrderStatusAndAccrual mocks base method.
+func (m *MockOrderService) UpdateOrderStatusAndAccrual(arg0 context.Context, arg1, arg2 string, arg3 float32) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateOrderStatus", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "UpdateOrderStatusAndAccrual", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// UpdateOrderStatus indicates an expected call of UpdateOrderStatus.
-func (mr *MockOrderServiceMockRecorder) UpdateOrderStatus(arg0, arg1, arg2 interface{}) *gomock.Call {
+// UpdateOrderStatusAndAccrual indicates an expected call of UpdateOrderStatusAndAccrual.
+func (mr *MockOrderServiceMockRecorder) UpdateOrderStatusAndAccrual(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateOrderStatus", reflect.TypeOf((*MockOrderService)(nil).UpdateOrderStatus), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateOrderStatusAndAccrual", reflect.TypeOf((*MockOrderService)(nil).UpdateOrderStatusAndAccrual), arg0, arg1, arg2, arg3)
 }

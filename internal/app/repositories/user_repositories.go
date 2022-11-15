@@ -7,6 +7,7 @@ import (
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx"
 	"github.com/jmoiron/sqlx"
+	"github.com/rs/zerolog/log"
 	"gophermart/internal/app/domain"
 )
 
@@ -55,9 +56,13 @@ func (r *UserRepository) IncreaseBalanceForOrder(ctx context.Context, orderNumbe
 	WHERE o.user_id = u.id 
 	AND o.number = $2
 	`
-	_, err := r.db.ExecContext(ctx, query, accrual, orderNumber)
+	result, err := r.db.ExecContext(ctx, query, accrual, orderNumber)
 	if err != nil {
 		return err
+	}
+	rows, err := result.RowsAffected()
+	if rows != 1 {
+		log.Error().Msg("increase user balance: expected one row to be affected")
 	}
 
 	return nil

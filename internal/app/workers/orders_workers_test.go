@@ -62,7 +62,12 @@ func TestOrderAccrualWorker_processOrder(t *testing.T) {
 				).Return(nil)
 			}
 			orderServiceMock := mock_workers.NewMockOrderService(ctrl)
-			orderServiceMock.EXPECT().UpdateOrderStatus(gomock.Any(), orderNumber, tt.accrualRes.Status).Return(nil)
+			orderServiceMock.EXPECT().UpdateOrderStatusAndAccrual(
+				gomock.Any(),
+				orderNumber,
+				tt.accrualRes.Status,
+				tt.accrualRes.Accrual,
+			).Return(nil)
 
 			orderWorker := NewOrderAccrualWorker(make(chan string), userServiceMock, orderServiceMock, accrualCalculatorMock)
 			actualRes, err := orderWorker.processOrder(orderNumber)

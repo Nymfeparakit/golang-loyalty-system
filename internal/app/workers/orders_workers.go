@@ -12,7 +12,7 @@ type UserService interface {
 }
 
 type OrderService interface {
-	UpdateOrderStatus(ctx context.Context, orderNumber string, orderStatus string) error
+	UpdateOrderStatusAndAccrual(ctx context.Context, orderNumber string, orderStatus string, accrual float32) error
 }
 
 type AccrualCalculator interface {
@@ -56,8 +56,9 @@ func (w *OrderAccrualWorker) processOrder(orderNumber string) (bool, error) {
 
 	// обновляем статус заказа
 	newOrderStatus := accrualRes.Status
+	orderAccrual := accrualRes.Accrual
 	log.Info().Msg(fmt.Sprintf("updating order status: %v - %v", orderNumber, newOrderStatus))
-	err = w.orderService.UpdateOrderStatus(context.Background(), orderNumber, newOrderStatus)
+	err = w.orderService.UpdateOrderStatusAndAccrual(context.Background(), orderNumber, newOrderStatus, orderAccrual)
 	if err != nil {
 		log.Error().Msg(fmt.Sprintf("failed to update order status: %v", err.Error()))
 		return false, err

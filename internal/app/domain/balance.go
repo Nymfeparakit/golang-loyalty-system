@@ -3,7 +3,7 @@ package domain
 import "time"
 
 type BalanceData struct {
-	Balance        float32 `json:"balance" db:"balance"`
+	Current        float32 `json:"current" db:"balance"`
 	WithdrawalsSum float32 `json:"withdrawn" db:"withdrawn"`
 }
 

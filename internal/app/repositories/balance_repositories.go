@@ -4,9 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx"
 	"github.com/jmoiron/sqlx"
+	"github.com/rs/zerolog/log"
 	"gophermart/internal/app/domain"
 	"time"
 )
@@ -116,6 +118,7 @@ func (r *BalanceRepository) GetBalanceAndWithdrawalsSum(ctx context.Context, use
 	if err != nil {
 		return nil, err
 	}
+	log.Info().Msg(fmt.Sprintf("got balance data for user %d, data: %v", userID, *balanceData))
 
 	return balanceData, nil
 }

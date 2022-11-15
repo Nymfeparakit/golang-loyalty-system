@@ -4,9 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx"
 	"github.com/jmoiron/sqlx"
+	"github.com/rs/zerolog/log"
 	"gophermart/internal/app/domain"
 )
 
@@ -67,12 +69,19 @@ func (r *OrderRepository) GetOrdersByUser(ctx context.Context, user *domain.User
 		return orders, err
 	}
 
+	log.Info().Msg(fmt.Sprintf("got orders by user: %v", *orders[0]))
+
 	return orders, nil
 }
 
-func (r *OrderRepository) UpdateOrderStatus(ctx context.Context, orderNumber string, orderStatus string) error {
-	query := `UPDATE user_order SET status=$1 WHERE number=$2`
-	_, err := r.db.ExecContext(ctx, query, &orderStatus, &orderNumber)
+func (r *OrderRepository) UpdateOrderStatusAndAccrual(
+	ctx context.Context,
+	orderNumber string,
+	orderStatus string,
+	accrual float32,
+) error {
+	query := `UPDATE user_order SET status=$1, accrual=$2 WHERE number=$3`
+	_, err := r.db.ExecContext(ctx, query, &orderStatus, &accrual, &orderNumber)
 	if err != nil {
 		return err
 	}
