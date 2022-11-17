@@ -13,6 +13,7 @@ type OrderRepository interface {
 	GetOrCreateOrder(ctx context.Context, orderToCreate domain.OrderDTO) (*domain.OrderDTO, bool, error)
 	GetOrdersByUser(ctx context.Context, user *domain.UserDTO) ([]*domain.OrderDTO, error)
 	UpdateOrderStatusAndAccrual(ctx context.Context, orderNumber string, orderStatus string, accrual float32) error
+	GetOrdersWithStatusesNotIn(ctx context.Context, statuses []string) ([]*domain.OrderDTO, error)
 }
 
 type OrderService struct {
@@ -52,6 +53,23 @@ func (s *OrderService) GetOrdersByUser(ctx context.Context, user *domain.UserDTO
 
 func (s *OrderService) UpdateOrderStatusAndAccrual(ctx context.Context, orderNumber string, orderStatus string, accrual float32) error {
 	return s.orderRepository.UpdateOrderStatusAndAccrual(ctx, orderNumber, orderStatus, accrual)
+}
+
+func (s *OrderService) GetUnprocessedOrdersNumbers(ctx context.Context) ([]string, error) {
+	unprocessedOrders, err := s.orderRepository.GetOrdersWithStatusesNotIn(
+		ctx,
+		[]string{domain.OrderProcessedStatus, domain.OrderInvalidStatus},
+	)
+	if err != nil {
+		return []string{}, err
+	}
+
+	var ordersNumbers []string
+	for _, order := range unprocessedOrders {
+		ordersNumbers = append(ordersNumbers, order.Number)
+	}
+
+	return ordersNumbers, nil
 }
 
 type OrderNumberValidator struct {

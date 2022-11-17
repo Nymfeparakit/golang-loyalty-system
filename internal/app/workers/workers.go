@@ -8,8 +8,6 @@ import (
 	"gophermart/internal/app/services"
 )
 
-const workersNum = 1
-
 func InitWorkers(db *sqlx.DB, config *configs.Config, ordersCh chan string, orderService *services.OrderService) {
 	userRepository := repositories.NewUserRepository(db)
 	userService := services.NewUserService(userRepository)
@@ -19,9 +17,6 @@ func InitWorkers(db *sqlx.DB, config *configs.Config, ordersCh chan string, orde
 	accrualCalculator := services.NewAccrualCalculationService(config.AccrualSystemAddr, requestsWorker)
 
 	log.Info().Msg("starting orders workers")
-	for i := 0; i < workersNum; i++ {
-		worker := NewOrderAccrualWorker(ordersCh, userService, orderService, accrualCalculator)
-		go worker.getOrdersAccrual()
-	}
-
+	worker := NewOrderAccrualWorker(ordersCh, userService, orderService, accrualCalculator)
+	go worker.getOrdersAccrual()
 }

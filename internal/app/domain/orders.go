@@ -4,6 +4,7 @@ import "time"
 
 const OrderProcessedStatus = "PROCESSED"
 const OrderProcessingStatus = "PROCESSING"
+const OrderInvalidStatus = "INVALID"
 
 type OrderDTO struct {
 	Number     string    `db:"number" json:"number"`

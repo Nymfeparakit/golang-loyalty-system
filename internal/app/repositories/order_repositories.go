@@ -4,11 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx"
 	"github.com/jmoiron/sqlx"
-	"github.com/rs/zerolog/log"
 	"gophermart/internal/app/domain"
 )
 
@@ -69,8 +67,6 @@ func (r *OrderRepository) GetOrdersByUser(ctx context.Context, user *domain.User
 		return orders, err
 	}
 
-	log.Info().Msg(fmt.Sprintf("got orders by user: %v", *orders[0]))
-
 	return orders, nil
 }
 
@@ -87,4 +83,31 @@ func (r *OrderRepository) UpdateOrderStatusAndAccrual(
 	}
 
 	return nil
+}
+
+func (r *OrderRepository) GetOrdersWithStatusesNotIn(ctx context.Context, statuses []string) ([]*domain.OrderDTO, error) {
+	query := `SELECT * FROM user_order WHERE status NOT IN (?)`
+	query, args, err := sqlx.In(query, statuses)
+	if err != nil {
+		return nil, err
+	}
+	query = r.db.Rebind(query)
+	rows, err := r.db.QueryxContext(ctx, query, args...)
+
+	var orders []*domain.OrderDTO
+	for rows.Next() {
+		var order domain.OrderDTO
+		err := rows.StructScan(&order)
+		if err != nil {
+			return nil, err
+		}
+		orders = append(orders, &order)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return orders, err
+	}
+
+	return orders, nil
 }

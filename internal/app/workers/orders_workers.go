@@ -13,6 +13,7 @@ type UserService interface {
 
 type OrderService interface {
 	UpdateOrderStatusAndAccrual(ctx context.Context, orderNumber string, orderStatus string, accrual float32) error
+	GetUnprocessedOrdersNumbers(ctx context.Context) ([]string, error)
 }
 
 type AccrualCalculator interface {
@@ -103,6 +104,12 @@ func (w *OrderAccrualWorker) processOrders() error {
 }
 
 func (w *OrderAccrualWorker) getOrdersAccrual() {
+	orders, err := w.orderService.GetUnprocessedOrdersNumbers(context.Background())
+	if err != nil {
+		log.Error().Msg(fmt.Sprintf("getting unprocessed orders failed - %v", err.Error()))
+		return
+	}
+	w.unprocessedOrders = orders
 	for {
 		// если необработанных заказов нет, то просто ожидаем, когда придет новый заказ
 		if len(w.unprocessedOrders) == 0 {
