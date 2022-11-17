@@ -75,6 +75,10 @@ func (w *OrderAccrualWorker) processOrder(orderNumber string) (bool, error) {
 		}
 	}
 
+	if accrualRes.Status == domain.OrderInvalidStatus {
+		log.Error().Msg(fmt.Sprintf("order '%s' got status 'INVALID'", orderNumber))
+		return true, nil
+	}
 	if accrualRes.Status == domain.OrderProcessedStatus {
 		return true, nil
 	}
