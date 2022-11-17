@@ -21,7 +21,6 @@ func NewBalanceRepository(db *sqlx.DB) *BalanceRepository {
 	return &BalanceRepository{db: db}
 }
 
-// todo: слишком много запросов в одном методе? может можно вызывать методы у отдельных репозиториев?
 func (r *BalanceRepository) CreateOrderAndWithdrawBalance(ctx context.Context, order *domain.OrderDTO, sum float32) error {
 	tx, err := r.db.BeginTx(context.Background(), nil)
 	if err != nil {
