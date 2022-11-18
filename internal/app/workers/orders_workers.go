@@ -34,8 +34,8 @@ func NewOrderAccrualWorker(
 	userService UserService,
 	orderService OrderService,
 	accrualCalculator AccrualCalculator,
+	unprocessedOrders []string,
 ) *OrderAccrualWorker {
-	unprocessedOrders := make([]string, 0)
 	return &OrderAccrualWorker{
 		ordersCh:          ordersCh,
 		accrualCalculator: accrualCalculator,
@@ -108,12 +108,6 @@ func (w *OrderAccrualWorker) processOrders() error {
 }
 
 func (w *OrderAccrualWorker) getOrdersAccrual() {
-	orders, err := w.orderService.GetUnprocessedOrdersNumbers(context.Background())
-	if err != nil {
-		log.Error().Msg(fmt.Sprintf("getting unprocessed orders failed - %v", err.Error()))
-		return
-	}
-	w.unprocessedOrders = orders
 	for {
 		// если необработанных заказов нет, то просто ожидаем, когда придет новый заказ
 		if len(w.unprocessedOrders) == 0 {

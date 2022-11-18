@@ -69,7 +69,9 @@ func TestOrderAccrualWorker_processOrder(t *testing.T) {
 				tt.accrualRes.Accrual,
 			).Return(nil)
 
-			orderWorker := NewOrderAccrualWorker(make(chan string), userServiceMock, orderServiceMock, accrualCalculatorMock)
+			orderWorker := NewOrderAccrualWorker(
+				make(chan string), userServiceMock, orderServiceMock, accrualCalculatorMock, []string{},
+			)
 			actualRes, err := orderWorker.processOrder(orderNumber)
 			require.NoError(t, err)
 			assert.Equal(t, tt.wantResult, actualRes)

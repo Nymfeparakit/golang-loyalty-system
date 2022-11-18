@@ -34,6 +34,21 @@ func (m *MockOrderService) EXPECT() *MockOrderServiceMockRecorder {
 	return m.recorder
 }
 
+// GetUnprocessedOrdersNumbers mocks base method.
+func (m *MockOrderService) GetUnprocessedOrdersNumbers(arg0 context.Context) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUnprocessedOrdersNumbers", arg0)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUnprocessedOrdersNumbers indicates an expected call of GetUnprocessedOrdersNumbers.
+func (mr *MockOrderServiceMockRecorder) GetUnprocessedOrdersNumbers(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUnprocessedOrdersNumbers", reflect.TypeOf((*MockOrderService)(nil).GetUnprocessedOrdersNumbers), arg0)
+}
+
 // UpdateOrderStatusAndAccrual mocks base method.
 func (m *MockOrderService) UpdateOrderStatusAndAccrual(arg0 context.Context, arg1, arg2 string, arg3 float32) error {
 	m.ctrl.T.Helper()
