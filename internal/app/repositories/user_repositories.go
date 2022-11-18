@@ -61,6 +61,9 @@ func (r *UserRepository) IncreaseBalanceForOrder(ctx context.Context, orderNumbe
 		return err
 	}
 	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
 	if rows != 1 {
 		log.Error().Msg("increase user balance: expected one row to be affected")
 	}

@@ -212,6 +212,8 @@ func TestUserBalanceHandler_HandleListBalanceWithdrawals(t *testing.T) {
 				assert.Equal(t, string(expectedResponse), w.Body.String())
 			}
 			assert.Equal(t, tt.want.contentType, w.Result().Header.Get("Content-Type"))
+			err := w.Result().Body.Close()
+			require.NoError(t, err)
 		})
 	}
 }

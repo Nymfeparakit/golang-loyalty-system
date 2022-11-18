@@ -93,6 +93,9 @@ func (r *OrderRepository) GetOrdersWithStatusesNotIn(ctx context.Context, status
 	}
 	query = r.db.Rebind(query)
 	rows, err := r.db.QueryxContext(ctx, query, args...)
+	if err != nil {
+		return []*domain.OrderDTO{}, err
+	}
 
 	var orders []*domain.OrderDTO
 	for rows.Next() {
