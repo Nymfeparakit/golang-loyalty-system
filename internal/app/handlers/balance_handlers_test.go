@@ -204,16 +204,17 @@ func TestUserBalanceHandler_HandleListBalanceWithdrawals(t *testing.T) {
 			userBalanceHandler := NewUserBalanceHandler(orderValidatorMock, authServiceMock, balanceServiceMock)
 			r.GET("/", userBalanceHandler.HandleListBalanceWithdrawals)
 			r.ServeHTTP(w, request)
+			result := w.Result()
 
 			assert.Equal(t, tt.want.statusCode, w.Code)
 			if tt.want.responseData != nil {
 				expectedResponse, err := json.Marshal(tt.want.responseData)
 				require.NoError(t, err)
 				assert.Equal(t, string(expectedResponse), w.Body.String())
+				err = result.Body.Close()
+				require.NoError(t, err)
 			}
-			assert.Equal(t, tt.want.contentType, w.Result().Header.Get("Content-Type"))
-			err := w.Result().Body.Close()
-			require.NoError(t, err)
+			assert.Equal(t, tt.want.contentType, result.Header.Get("Content-Type"))
 		})
 	}
 }
