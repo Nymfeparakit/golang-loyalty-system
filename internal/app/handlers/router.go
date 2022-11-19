@@ -11,6 +11,8 @@ import (
 
 func InitRouter(db *sqlx.DB, cfg *configs.Config, orderService OrderService) *gin.Engine {
 	r := gin.Default()
+	r.Use(middlewares.DecompressingRequestMiddleware())
+	r.Use(middlewares.CompressingResponseMiddleware())
 	userRepository := repositories.NewUserRepository(db)
 	userService := services.NewUserService(userRepository)
 	tokenService := services.NewAuthJWTTokenService(cfg.AuthSecretKey)

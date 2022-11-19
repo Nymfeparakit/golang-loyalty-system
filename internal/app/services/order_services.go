@@ -15,13 +15,28 @@ type OrderRepository interface {
 	UpdateOrderStatus(ctx context.Context, orderNumber string, orderStatus string) error
 }
 
-type OrderService struct {
-	ordersCh        chan string
-	orderRepository OrderRepository
+type OrderSender struct {
+	ordersCh chan string
 }
 
-func NewOrderService(orderRepository OrderRepository, ordersCh chan string) *OrderService {
-	return &OrderService{orderRepository: orderRepository, ordersCh: ordersCh}
+func NewOrderSender(ordersCh chan string) *OrderSender {
+	return &OrderSender{ordersCh: ordersCh}
+}
+
+func (s *OrderSender) SendOrderToWorkers(orderNumber string) {
+	log.Info().Msg(fmt.Sprintf("sending to workers order '%s'", orderNumber))
+	go func(orderNumber string, orderCh chan string) {
+		s.ordersCh <- orderNumber
+	}(orderNumber, s.ordersCh)
+}
+
+type OrderService struct {
+	orderRepository OrderRepository
+	orderSender     *OrderSender
+}
+
+func NewOrderService(orderRepository OrderRepository, orderSender *OrderSender) *OrderService {
+	return &OrderService{orderRepository: orderRepository, orderSender: orderSender}
 }
 
 func (s *OrderService) GetOrCreateOrder(ctx context.Context, orderToCreate domain.OrderDTO) (*domain.OrderDTO, bool, error) {
@@ -35,12 +50,9 @@ func (s *OrderService) GetOrCreateOrder(ctx context.Context, orderToCreate domai
 		return nil, false, ErrOrderExistsForOtherUser
 	}
 
-	// отправляем номер в канал для дальнейшей обработки заказа
+	// отправляем номер для дальнейшей обработки заказа
 	if created {
-		go func(ordersCh chan string, orderNumber string) {
-			log.Info().Msg(fmt.Sprintf("sending to workers order '%s'", orderNumber))
-			ordersCh <- orderNumber
-		}(s.ordersCh, order.Number)
+		s.orderSender.SendOrderToWorkers(orderToCreate.Number)
 	}
 
 	return order, created, nil

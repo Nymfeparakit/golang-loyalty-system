@@ -53,8 +53,7 @@ func (w *RateLimitedReqWorker) ProcessRequests() {
 	log.Info().Msg("reqs worker: waiting for new requests")
 	ticker := time.NewTicker(reqsRate)
 	defer ticker.Stop()
-	for {
-		req := <-w.reqCh
+	for req := range w.reqCh {
 		<-ticker.C
 		go w.executeRequest(req)
 	}
