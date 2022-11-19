@@ -107,27 +107,17 @@ func (w *OrderAccrualWorker) processOrders() error {
 	return nil
 }
 
-func (w *OrderAccrualWorker) getOrdersAccrual() {
+func (w *OrderAccrualWorker) Run() {
 	for {
 		// если необработанных заказов нет, то просто ожидаем, когда придет новый заказ
 		if len(w.unprocessedOrders) == 0 {
 			log.Info().Msg("waiting for new order number")
 			orderNumber := <-w.ordersCh
-			err := w.accrualCalculator.CreateOrderForCalculation(orderNumber)
-			if err != nil {
-				log.Error().Msg(fmt.Sprintf("creating order for accrual failed - %v", err.Error()))
-				return
-			}
 			w.unprocessedOrders = append(w.unprocessedOrders, orderNumber)
 		}
 		select {
 		case orderNumber := <-w.ordersCh:
-			log.Info().Msg(fmt.Sprintf("receiving new order '%s' in worker", orderNumber))
-			err := w.accrualCalculator.CreateOrderForCalculation(orderNumber)
-			if err != nil {
-				log.Error().Msg(fmt.Sprintf("creating order for accrual failed - %v", err.Error()))
-				return
-			}
+			log.Info().Msg(fmt.Sprintf("receiving new order '%s' in accrual worker", orderNumber))
 			w.unprocessedOrders = append(w.unprocessedOrders, orderNumber)
 		default:
 			err := w.processOrders()

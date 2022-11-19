@@ -13,7 +13,8 @@ import (
 
 func initOrderService(db *sqlx.DB, ordersCh chan string) *services.OrderService {
 	orderRepository := repositories.NewOrderRepository(db)
-	return services.NewOrderService(orderRepository, ordersCh)
+	orderSender := services.NewOrderSender(ordersCh)
+	return services.NewOrderService(orderRepository, orderSender)
 }
 
 func main() {
