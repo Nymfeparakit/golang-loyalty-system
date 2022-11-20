@@ -9,6 +9,7 @@ import (
 	"gophermart/internal/app/repositories"
 	"gophermart/internal/app/services"
 	"sync"
+	"time"
 )
 
 const (
@@ -54,11 +55,21 @@ func (r *Runner) StartWorkers(
 	}
 }
 
-func (r *Runner) WaitWorkersToStop() {
-	log.Info().Msg("waiting orders workers to stop...")
-	r.ordersWorkersWG.Wait()
-	log.Info().Msg("all orders workers stopped!")
-	log.Info().Msg("waiting for request worker to stop...")
-	r.requestWorkerWG.Wait()
-	log.Info().Msg("request worker stopped!")
+func (r *Runner) WaitWorkersToStop(timeout time.Duration) bool {
+	notifyCh := make(chan struct{})
+	go func() {
+		defer close(notifyCh)
+		log.Info().Msg("waiting orders workers to stop...")
+		r.ordersWorkersWG.Wait()
+		log.Info().Msg("all orders workers stopped!")
+		log.Info().Msg("waiting for request worker to stop...")
+		r.requestWorkerWG.Wait()
+		log.Info().Msg("request worker stopped!")
+	}()
+	select {
+	case <-notifyCh:
+		return true
+	case <-time.After(timeout):
+		return false
+	}
 }

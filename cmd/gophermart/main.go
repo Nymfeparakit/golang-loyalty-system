@@ -76,5 +76,7 @@ func main() {
 	orderSender.Stop()
 	// выполняем остановку всех воркеров
 	cancelFunc()
-	runner.WaitWorkersToStop()
+	if ok := runner.WaitWorkersToStop(5 * time.Second); !ok {
+		log.Error().Msg("waiting for workers to stop - timeout error")
+	}
 }
