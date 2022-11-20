@@ -23,7 +23,7 @@ func TestUserBalanceHandler_HandleGetUserBalance(t *testing.T) {
 		contentType  string
 	}
 
-	balanceData := &domain.BalanceData{Current: 100, WithdrawalsSum: 50}
+	balanceData := &domain.BalanceData{Current: 100, Withdrawn: 50}
 	user := &domain.UserDTO{ID: 1}
 	tests := []struct {
 		name                        string

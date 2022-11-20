@@ -1,8 +1,6 @@
 package workers
 
 import (
-	"context"
-	"fmt"
 	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog/log"
 	"gophermart/internal/app/repositories"
@@ -36,11 +34,13 @@ func (p *OrderProcessor) Start(
 	}
 
 	log.Info().Msg("starting orders accrual workers")
-	orders, err := orderService.GetUnprocessedOrdersNumbers(context.Background())
-	if err != nil {
-		log.Error().Msg(fmt.Sprintf("getting unprocessed orders failed - %v", err.Error()))
-		return
-	}
+	//orders, err := orderService.GetUnprocessedOrdersNumbers(context.Background())
+	//if err != nil {
+	//	log.Error().Msg(fmt.Sprintf("getting unprocessed orders failed - %v", err.Error()))
+	//	return
+	//}
+	orders := make([]string, 0)
+
 	ordersNum := len(orders)
 	ordersPerWorker := ordersNum / accrualWorkersNum
 	for i := 0; i < accrualWorkersNum; i++ {

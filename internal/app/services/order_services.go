@@ -13,7 +13,7 @@ type OrderRepository interface {
 	GetOrCreateOrder(ctx context.Context, orderToCreate domain.OrderDTO) (*domain.OrderDTO, bool, error)
 	GetOrdersByUser(ctx context.Context, user *domain.UserDTO) ([]*domain.OrderDTO, error)
 	UpdateOrderStatusAndAccrual(ctx context.Context, orderNumber string, orderStatus string, accrual float32) error
-	GetOrdersWithStatusesNotIn(ctx context.Context, statuses []string) ([]*domain.OrderDTO, error)
+	GetOrdersWithStatusesIn(ctx context.Context, statuses []string) ([]*domain.OrderDTO, error)
 }
 
 type OrderSender struct {
@@ -68,9 +68,9 @@ func (s *OrderService) UpdateOrderStatusAndAccrual(ctx context.Context, orderNum
 }
 
 func (s *OrderService) GetUnprocessedOrdersNumbers(ctx context.Context) ([]string, error) {
-	unprocessedOrders, err := s.orderRepository.GetOrdersWithStatusesNotIn(
+	unprocessedOrders, err := s.orderRepository.GetOrdersWithStatusesIn(
 		ctx,
-		[]string{domain.OrderProcessedStatus, domain.OrderInvalidStatus},
+		[]string{domain.OrderNewStatus, domain.OrderProcessingStatus},
 	)
 	if err != nil {
 		return []string{}, err

@@ -10,9 +10,9 @@ import (
 )
 
 type UserBalanceService interface {
-	WithdrawBalanceForOrder(ctx context.Context, order *domain.OrderDTO, sum float32) error
+	WithdrawBalanceForOrder(ctx context.Context, withdrawal *domain.Withdrawal) error
 	GetBalanceWithdrawals(ctx context.Context, userID int) ([]*domain.Withdrawal, error)
-	GetBalanceAndWithdrawalsSum(ctx context.Context, userID int) (*domain.BalanceData, error)
+	GetUserBalance(ctx context.Context, userID int) (*domain.BalanceData, error)
 }
 
 type UserBalanceHandler struct {
@@ -38,7 +38,7 @@ func (h *UserBalanceHandler) HandleGetUserBalance(c *gin.Context) {
 		return
 	}
 
-	balanceData, err := h.balanceService.GetBalanceAndWithdrawalsSum(c.Request.Context(), user.ID)
+	balanceData, err := h.balanceService.GetUserBalance(c.Request.Context(), user.ID)
 	if err != nil {
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
@@ -67,11 +67,12 @@ func (h *UserBalanceHandler) HandleWithdrawBalance(c *gin.Context) {
 		return
 	}
 
-	orderToCreate := domain.OrderDTO{
-		Number: input.OrderNumber,
+	withdrawalToCreate := &domain.Withdrawal{
+		Order:  input.OrderNumber,
+		Sum:    input.Sum,
 		UserID: user.ID,
 	}
-	err := h.balanceService.WithdrawBalanceForOrder(c.Request.Context(), &orderToCreate, input.Sum)
+	err := h.balanceService.WithdrawBalanceForOrder(c.Request.Context(), withdrawalToCreate)
 	if errors.Is(err, repositories.ErrOrderAlreadyExists) {
 		c.JSON(http.StatusConflict, gin.H{"errors": "Order already exists"})
 		return

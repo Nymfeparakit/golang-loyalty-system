@@ -38,7 +38,7 @@ func (m *MockUserBalanceService) EXPECT() *MockUserBalanceServiceMockRecorder {
 // GetBalanceAndWithdrawalsSum mocks base method.
 func (m *MockUserBalanceService) GetBalanceAndWithdrawalsSum(arg0 context.Context, arg1 int) (*domain.BalanceData, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetBalanceAndWithdrawalsSum", arg0, arg1)
+	ret := m.ctrl.Call(m, "GetUserBalance", arg0, arg1)
 	ret0, _ := ret[0].(*domain.BalanceData)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
@@ -47,7 +47,7 @@ func (m *MockUserBalanceService) GetBalanceAndWithdrawalsSum(arg0 context.Contex
 // GetBalanceAndWithdrawalsSum indicates an expected call of GetBalanceAndWithdrawalsSum.
 func (mr *MockUserBalanceServiceMockRecorder) GetBalanceAndWithdrawalsSum(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBalanceAndWithdrawalsSum", reflect.TypeOf((*MockUserBalanceService)(nil).GetBalanceAndWithdrawalsSum), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserBalance", reflect.TypeOf((*MockUserBalanceService)(nil).GetBalanceAndWithdrawalsSum), arg0, arg1)
 }
 
 // GetBalanceWithdrawals mocks base method.

@@ -2,9 +2,12 @@ package domain
 
 import "time"
 
-const OrderProcessedStatus = "PROCESSED"
-const OrderProcessingStatus = "PROCESSING"
-const OrderInvalidStatus = "INVALID"
+const (
+	OrderProcessedStatus  = "PROCESSED"
+	OrderProcessingStatus = "PROCESSING"
+	OrderInvalidStatus    = "INVALID"
+	OrderNewStatus        = "NEW"
+)
 
 type OrderDTO struct {
 	Number     string    `db:"number" json:"number"`

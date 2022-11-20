@@ -85,8 +85,8 @@ func (r *OrderRepository) UpdateOrderStatusAndAccrual(
 	return nil
 }
 
-func (r *OrderRepository) GetOrdersWithStatusesNotIn(ctx context.Context, statuses []string) ([]*domain.OrderDTO, error) {
-	query := `SELECT * FROM user_order WHERE status NOT IN (?)`
+func (r *OrderRepository) GetOrdersWithStatusesIn(ctx context.Context, statuses []string) ([]*domain.OrderDTO, error) {
+	query := `SELECT * FROM user_order WHERE status IN (?)`
 	query, args, err := sqlx.In(query, statuses)
 	if err != nil {
 		return nil, err

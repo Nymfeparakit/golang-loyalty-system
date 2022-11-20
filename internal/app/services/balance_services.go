@@ -5,13 +5,12 @@ import (
 	"fmt"
 	"github.com/rs/zerolog/log"
 	"gophermart/internal/app/domain"
-	"time"
 )
 
 type BalanceRepository interface {
-	CreateOrderAndWithdrawBalance(ctx context.Context, order *domain.OrderDTO, sum float32) error
+	WithdrawBalanceForOrder(ctx context.Context, withdrawal *domain.Withdrawal) error
 	GetBalanceWithdrawals(ctx context.Context, userID int) ([]*domain.Withdrawal, error)
-	GetBalanceAndWithdrawalsSum(ctx context.Context, userID int) (*domain.BalanceData, error)
+	GetUserBalance(ctx context.Context, userID int) (*domain.BalanceData, error)
 }
 
 type UserBalanceService struct {
@@ -22,19 +21,16 @@ func NewUserBalanceService(balanceRepository BalanceRepository) *UserBalanceServ
 	return &UserBalanceService{balanceRepository: balanceRepository}
 }
 
-func (s *UserBalanceService) GetBalanceAndWithdrawalsSum(ctx context.Context, userID int) (*domain.BalanceData, error) {
-	balanceData, err := s.balanceRepository.GetBalanceAndWithdrawalsSum(ctx, userID)
+func (s *UserBalanceService) GetUserBalance(ctx context.Context, userID int) (*domain.BalanceData, error) {
+	balanceData, err := s.balanceRepository.GetUserBalance(ctx, userID)
 	if err != nil {
 		log.Error().Msg(fmt.Sprintf("can not get balance for user: %v", err.Error()))
 	}
 	return balanceData, err
 }
 
-func (s *UserBalanceService) WithdrawBalanceForOrder(ctx context.Context, order *domain.OrderDTO, sum float32) error {
-	order.UploadedAt = time.Now()
-	// устанавливаем статус сразу в processed для указания того, что заказ не нужно обрабатывать
-	order.Status = domain.OrderProcessedStatus
-	err := s.balanceRepository.CreateOrderAndWithdrawBalance(ctx, order, sum)
+func (s *UserBalanceService) WithdrawBalanceForOrder(ctx context.Context, withdrawal *domain.Withdrawal) error {
+	err := s.balanceRepository.WithdrawBalanceForOrder(ctx, withdrawal)
 	if err != nil {
 		log.Error().Msg(fmt.Sprintf("can not withdraw balance for order: %v", err.Error()))
 	}
