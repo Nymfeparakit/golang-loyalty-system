@@ -18,6 +18,7 @@ func NewRegisterOrdersWorker(registerOrderCh chan string, processOrderCh chan st
 }
 
 func (w *RegisterOrdersWorker) Run(ctx context.Context, wg *sync.WaitGroup) {
+	defer close(w.processOrderCh)
 	defer wg.Done()
 	for {
 		select {
@@ -37,7 +38,6 @@ func (w *RegisterOrdersWorker) Run(ctx context.Context, wg *sync.WaitGroup) {
 			}(w.processOrderCh, orderNumber)
 		case <-ctx.Done():
 			log.Info().Msg("stopping worker registering orders - context is done")
-			close(w.processOrderCh)
 			return
 		}
 	}
