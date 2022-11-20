@@ -61,7 +61,7 @@ func main() {
 		}
 	}()
 
-	quitCh := make(chan os.Signal)
+	quitCh := make(chan os.Signal, 1)
 	signal.Notify(quitCh, syscall.SIGINT, syscall.SIGTERM)
 	<-quitCh
 	log.Info().Msg("starting graceful shutdown...")
