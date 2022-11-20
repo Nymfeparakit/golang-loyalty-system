@@ -51,7 +51,7 @@ func TestUserBalanceHandler_HandleGetUserBalance(t *testing.T) {
 			authServiceMock := mock_handlers.NewMockAuthService(ctrl)
 			authServiceMock.EXPECT().GetUserFromContext(request.Context()).Return(user, true)
 			balanceServiceMock := mock_handlers.NewMockUserBalanceService(ctrl)
-			balanceServiceMock.EXPECT().GetBalanceAndWithdrawalsSum(
+			balanceServiceMock.EXPECT().GetUserBalance(
 				request.Context(), user.ID,
 			).Return(tt.getBalanceAndWithdrawalsRes, nil)
 			orderValidatorMock := mock_handlers.NewMockOrderNumberValidator(ctrl)
@@ -129,7 +129,7 @@ func TestUserBalanceHandler_HandleWithdrawBalance(t *testing.T) {
 			authServiceMock.EXPECT().GetUserFromContext(request.Context()).Return(user, true)
 			balanceServiceMock := mock_handlers.NewMockUserBalanceService(ctrl)
 			balanceServiceMock.EXPECT().WithdrawBalanceForOrder(
-				request.Context(), &domain.OrderDTO{Number: orderNumber, UserID: user.ID}, tt.reqInput.Sum,
+				request.Context(), &domain.Withdrawal{Order: orderNumber, UserID: user.ID, Sum: tt.reqInput.Sum},
 			).Return(tt.withdrawBalanceForOrderRes).AnyTimes()
 			orderValidatorMock := mock_handlers.NewMockOrderNumberValidator(ctrl)
 			orderValidatorMock.EXPECT().Validate(tt.reqInput.OrderNumber).Return(true).AnyTimes()
