@@ -65,7 +65,7 @@ func main() {
 	signal.Notify(quitCh, syscall.SIGINT, syscall.SIGTERM)
 	<-quitCh
 	log.Info().Msg("starting graceful shutdown...")
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	log.Info().Msg("waiting for connections to close...")
 	if err := srv.Shutdown(ctx); err != nil {
