@@ -25,9 +25,7 @@ func NewOrderSender(ordersCh chan string) *OrderSender {
 
 func (s *OrderSender) SendOrderToWorkers(orderNumber string) {
 	log.Info().Msg(fmt.Sprintf("sending to workers order '%s'", orderNumber))
-	go func(orderNumber string, orderCh chan string) {
-		s.ordersCh <- orderNumber
-	}(orderNumber, s.ordersCh)
+	s.ordersCh <- orderNumber
 }
 
 func (s *OrderSender) Stop() {

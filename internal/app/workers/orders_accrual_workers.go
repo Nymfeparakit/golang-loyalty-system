@@ -110,7 +110,11 @@ func (w *OrderAccrualWorker) Run(ctx context.Context, wg *sync.WaitGroup) {
 		if len(w.unprocessedOrders) == 0 {
 			log.Info().Msg("waiting for new order number")
 			select {
-			case orderNumber := <-w.ordersCh:
+			case orderNumber, ok := <-w.ordersCh:
+				if !ok {
+					// todo: what to do here?
+					return
+				}
 				w.unprocessedOrders = append(w.unprocessedOrders, orderNumber)
 			case <-ctx.Done():
 				log.Info().Msg("orders worker stops - context is done")
@@ -120,7 +124,11 @@ func (w *OrderAccrualWorker) Run(ctx context.Context, wg *sync.WaitGroup) {
 			w.unprocessedOrders = append(w.unprocessedOrders, orderNumber)
 		}
 		select {
-		case orderNumber := <-w.ordersCh:
+		case orderNumber, ok := <-w.ordersCh:
+			if !ok {
+				// todo: what to do here?
+				return
+			}
 			log.Info().Msg(fmt.Sprintf("receiving new order '%s' in accrual worker", orderNumber))
 			w.unprocessedOrders = append(w.unprocessedOrders, orderNumber)
 		default:
