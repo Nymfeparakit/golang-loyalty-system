@@ -5,6 +5,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog/log"
 	"gophermart/internal/app/configs"
+	"gophermart/internal/app/domain"
 	"gophermart/internal/app/repositories"
 	"gophermart/internal/app/services"
 	"sync"
@@ -13,6 +14,11 @@ import (
 const (
 	accrualWorkersNum = 2
 )
+
+type AccrualCalculator interface {
+	CreateOrderForCalculation(ctx context.Context, orderNumber string) error
+	GetOrderAccrualRes(ctx context.Context, orderNumber string) (*domain.AccrualCalculationRes, error)
+}
 
 type Runner struct {
 	ordersWorkersWG *sync.WaitGroup

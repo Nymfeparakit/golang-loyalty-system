@@ -16,11 +16,6 @@ type OrderService interface {
 	UpdateOrderStatus(ctx context.Context, orderNumber string, orderStatus string) error
 }
 
-type AccrualCalculator interface {
-	CreateOrderForCalculation(ctx context.Context, orderNumber string) error
-	GetOrderAccrualRes(ctx context.Context, orderNumber string) (*domain.AccrualCalculationRes, error)
-}
-
 type OrderAccrualWorker struct {
 	ordersCh          chan string
 	userService       UserService
