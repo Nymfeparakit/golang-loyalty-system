@@ -28,7 +28,7 @@ type orderInput struct {
 	Order string `json:"order"`
 }
 
-func (s *AccrualCalculationService) CreateOrderForCalculation(orderNumber string) error {
+func (s *AccrualCalculationService) CreateOrderForCalculation(ctx context.Context, orderNumber string) error {
 	requestURL := s.accrualSystemAddr + "/api/orders"
 	reqBody, err := json.Marshal(&orderInput{Order: orderNumber})
 	reqBodyReader := bytes.NewReader(reqBody)
@@ -42,7 +42,7 @@ func (s *AccrualCalculationService) CreateOrderForCalculation(orderNumber string
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	res, err := s.requestsWorker.HandleRequest(context.Background(), req)
+	res, err := s.requestsWorker.HandleRequest(ctx, req)
 	if err != nil {
 		return err
 	}
@@ -57,7 +57,7 @@ func (s *AccrualCalculationService) CreateOrderForCalculation(orderNumber string
 	return nil
 }
 
-func (s *AccrualCalculationService) GetOrderAccrualRes(orderNumber string) (*domain.AccrualCalculationRes, error) {
+func (s *AccrualCalculationService) GetOrderAccrualRes(ctx context.Context, orderNumber string) (*domain.AccrualCalculationRes, error) {
 	requestURL := s.accrualSystemAddr + "/api/orders/"
 	// проверяем, был ли заказ обработан
 	req, err := http.NewRequest(http.MethodGet, requestURL+orderNumber, nil)
@@ -65,7 +65,7 @@ func (s *AccrualCalculationService) GetOrderAccrualRes(orderNumber string) (*dom
 		log.Error().Msg("request to accrual system failed: " + err.Error())
 		return nil, err
 	}
-	res, err := s.requestsWorker.HandleRequest(context.Background(), req)
+	res, err := s.requestsWorker.HandleRequest(ctx, req)
 	if err != nil {
 		log.Error().Msg("request to accrual system failed: " + err.Error())
 		return nil, err

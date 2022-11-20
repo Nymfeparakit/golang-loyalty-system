@@ -7,6 +7,7 @@ import (
 	"gophermart/internal/app/domain"
 	"io"
 	"net/http"
+	"sync"
 	"time"
 )
 
@@ -36,7 +37,6 @@ func (w *RateLimitedReqWorker) HandleRequest(ctx context.Context, req *http.Requ
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	w.reqCh <- RequestWithResponseCh{req: req, respCh: respCh, ctx: ctx}
-	defer close(respCh)
 
 	var resp *domain.ResponseWithReadBody
 	select {
@@ -44,22 +44,32 @@ func (w *RateLimitedReqWorker) HandleRequest(ctx context.Context, req *http.Requ
 		resp = r
 	case <-time.After(respChTimeout):
 		return nil, fmt.Errorf("response channel timout exceeded")
+	case <-ctx.Done():
+		return nil, ctx.Err()
 	}
 
 	return resp, nil
 }
 
-func (w *RateLimitedReqWorker) ProcessRequests() {
+func (w *RateLimitedReqWorker) Run(ctx context.Context, wg *sync.WaitGroup) {
+	defer wg.Done()
 	log.Info().Msg("reqs worker: waiting for new requests")
 	ticker := time.NewTicker(reqsRate)
 	defer ticker.Stop()
-	for req := range w.reqCh {
-		<-ticker.C
-		go w.executeRequest(req)
+	for {
+		select {
+		case req := <-w.reqCh:
+			<-ticker.C
+			go w.executeRequest(req)
+		case <-ctx.Done():
+			return
+		}
 	}
 }
 
+// todo: тут нужно что-то менять с контекстом?
 func (w *RateLimitedReqWorker) executeRequest(req RequestWithResponseCh) {
+	defer close(req.respCh)
 	client := http.DefaultClient
 	log.Info().Msg(fmt.Sprintf("executing request: %v", req))
 	resp, err := client.Do(req.req)

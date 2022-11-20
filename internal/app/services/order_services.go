@@ -30,6 +30,10 @@ func (s *OrderSender) SendOrderToWorkers(orderNumber string) {
 	}(orderNumber, s.ordersCh)
 }
 
+func (s *OrderSender) Stop() {
+	close(s.ordersCh)
+}
+
 type OrderService struct {
 	orderRepository OrderRepository
 	orderSender     *OrderSender
