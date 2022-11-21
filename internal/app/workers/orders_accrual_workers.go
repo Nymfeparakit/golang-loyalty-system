@@ -112,7 +112,7 @@ func (w *OrderAccrualWorker) Run(ctx context.Context, wg *sync.WaitGroup) {
 			select {
 			case orderNumber, ok := <-w.ordersCh:
 				if !ok {
-					// todo: what to do here?
+					log.Info().Msg("orders worker stops - order chan is closed")
 					return
 				}
 				w.unprocessedOrders = append(w.unprocessedOrders, orderNumber)
@@ -126,7 +126,7 @@ func (w *OrderAccrualWorker) Run(ctx context.Context, wg *sync.WaitGroup) {
 		select {
 		case orderNumber, ok := <-w.ordersCh:
 			if !ok {
-				// todo: what to do here?
+				log.Info().Msg("orders worker stops - order chan is closed")
 				return
 			}
 			log.Info().Msg(fmt.Sprintf("receiving new order '%s' in accrual worker", orderNumber))
