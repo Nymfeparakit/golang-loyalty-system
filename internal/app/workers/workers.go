@@ -49,7 +49,7 @@ func (r *Runner) StartWorkers(
 	go worker.Run(ctx, r.ordersWorkersWG)
 
 	log.Info().Msg("starting orders accrual workers")
-	orders, err := orderService.GetUnprocessedOrdersNumbers(context.Background())
+	orders, err := orderService.GetUnprocessedOrdersNumbers(ctx)
 	if err != nil {
 		log.Error().Msg(fmt.Sprintf("getting unprocessed orders failed - %v", err.Error()))
 		return
