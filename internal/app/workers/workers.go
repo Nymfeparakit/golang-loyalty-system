@@ -42,7 +42,7 @@ func (r *Runner) StartWorkers(
 	userRepository := repositories.NewUserRepository(db)
 	userService := services.NewUserService(userRepository)
 
-	processOrdersCh := make(chan string)
+	processOrdersCh := make(chan string, 100)
 	log.Info().Msg("starting register orders worker")
 	worker := NewRegisterOrdersWorker(ordersCh, processOrdersCh, accrualCalculator)
 	r.ordersWorkersWG.Add(1)

@@ -32,10 +32,9 @@ func (w *RegisterOrdersWorker) Run(ctx context.Context, wg *sync.WaitGroup) {
 				log.Error().Msg(fmt.Sprintf("creating order for accrual failed - %v", err.Error()))
 				return
 			}
-			go func(processOrderCh chan string, orderNumber string) {
-				log.Info().Msg(fmt.Sprintf("sending to accrual workers order '%s'", orderNumber))
-				processOrderCh <- orderNumber
-			}(w.processOrderCh, orderNumber)
+			log.Info().Msg(fmt.Sprintf("sending to accrual workers order '%s'", orderNumber))
+			// отправляем заказ в буферизованный канал processOrderCh
+			w.processOrderCh <- orderNumber
 		case <-ctx.Done():
 			log.Info().Msg("stopping worker registering orders - context is done")
 			return

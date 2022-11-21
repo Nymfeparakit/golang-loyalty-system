@@ -121,13 +121,12 @@ func (w *OrderAccrualWorker) Run(ctx context.Context, wg *sync.WaitGroup) {
 					log.Info().Msg("orders worker stops - order chan is closed")
 					return
 				}
+				log.Info().Msg(fmt.Sprintf("receiving new order '%s' in accrual worker", orderNumber))
 				w.unprocessedOrders = append(w.unprocessedOrders, orderNumber)
 			case <-ctx.Done():
 				log.Info().Msg("orders worker stops - context is done")
 				return
 			}
-			orderNumber := <-w.ordersCh
-			w.unprocessedOrders = append(w.unprocessedOrders, orderNumber)
 		}
 		select {
 		case orderNumber, ok := <-w.ordersCh:
