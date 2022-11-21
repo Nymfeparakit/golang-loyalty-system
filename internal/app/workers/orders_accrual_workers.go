@@ -120,8 +120,6 @@ func (w *OrderAccrualWorker) Run(ctx context.Context, wg *sync.WaitGroup) {
 				log.Info().Msg("orders worker stops - context is done")
 				return
 			}
-			orderNumber := <-w.ordersCh
-			w.unprocessedOrders = append(w.unprocessedOrders, orderNumber)
 		}
 		select {
 		case orderNumber, ok := <-w.ordersCh:
