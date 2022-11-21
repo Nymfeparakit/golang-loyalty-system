@@ -1,19 +1,25 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	_ "github.com/jackc/pgx/stdlib"
 	"github.com/jmoiron/sqlx"
+	"github.com/rs/zerolog/log"
 	"gophermart/internal/app/configs"
 	"gophermart/internal/app/handlers"
 	"gophermart/internal/app/repositories"
 	"gophermart/internal/app/services"
 	"gophermart/internal/app/workers"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 )
 
-func initOrderService(db *sqlx.DB, ordersCh chan string) *services.OrderService {
+func initOrderService(db *sqlx.DB, orderSender *services.OrderSender) *services.OrderService {
 	orderRepository := repositories.NewOrderRepository(db)
-	orderSender := services.NewOrderSender(ordersCh)
 	return services.NewOrderService(orderRepository, orderSender)
 }
 
@@ -34,11 +40,43 @@ func main() {
 	defer db.Close()
 
 	ordersCh := make(chan string)
-	orderService := initOrderService(db, ordersCh)
+	orderSender := services.NewOrderSender(ordersCh)
+	orderService := initOrderService(db, orderSender)
 	// Инициируем хэндлеры для ендпоинтов
 	router := handlers.InitRouter(db, cfg, orderService)
 	// Запускаем воркеров
-	workers.InitWorkers(db, cfg, ordersCh, orderService)
+	ctx, cancelFunc := context.WithCancel(context.Background())
+	runner := workers.NewRunner()
+	runner.StartWorkers(ctx, db, cfg, ordersCh, orderService)
 
-	router.Run(cfg.RunAddr)
+	srv := &http.Server{
+		Addr:    cfg.RunAddr,
+		Handler: router,
+	}
+
+	go func() {
+		// service connections
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Error().Msg(fmt.Sprintf("listen: %s\n", err))
+		}
+	}()
+
+	quitCh := make(chan os.Signal, 1)
+	signal.Notify(quitCh, syscall.SIGINT, syscall.SIGTERM)
+	<-quitCh
+	log.Info().Msg("starting graceful shutdown...")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	log.Info().Msg("waiting for connections to close...")
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Error().Msg(fmt.Sprintf("server shutdown error: %v", err))
+	}
+
+	// после остановки сервера останавливаем отправку ордеров воркерам
+	orderSender.Stop()
+	// выполняем остановку всех воркеров
+	cancelFunc()
+	if ok := runner.WaitWorkersToStop(5 * time.Second); !ok {
+		log.Error().Msg("waiting for workers to stop - timeout error")
+	}
 }

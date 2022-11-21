@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/rs/zerolog/log"
 	"gophermart/internal/app/domain"
+	"sync"
 )
 
 type UserService interface {
@@ -14,11 +15,6 @@ type UserService interface {
 type OrderService interface {
 	UpdateOrderStatusAndAccrual(ctx context.Context, orderNumber string, orderStatus string, accrual float32) error
 	GetUnprocessedOrdersNumbers(ctx context.Context) ([]string, error)
-}
-
-type AccrualCalculator interface {
-	CreateOrderForCalculation(orderNumber string) error
-	GetOrderAccrualRes(orderNumber string) (*domain.AccrualCalculationRes, error)
 }
 
 type OrderAccrualWorker struct {
@@ -48,9 +44,9 @@ func NewOrderAccrualWorker(
 // processOrder проверяем статус заказа с номером orderNumber
 // если заказ был обработан, то пополняет баланс пользователя
 // возвращает флаг processed, указывающий на то, был ли обработан заказ
-func (w *OrderAccrualWorker) processOrder(orderNumber string) (bool, error) {
+func (w *OrderAccrualWorker) processOrder(ctx context.Context, orderNumber string) (bool, error) {
 	// получаем сведения по начислению баллов за заказ
-	accrualRes, err := w.accrualCalculator.GetOrderAccrualRes(orderNumber)
+	accrualRes, err := w.accrualCalculator.GetOrderAccrualRes(ctx, orderNumber)
 	if err != nil {
 		return false, err
 	}
@@ -88,17 +84,23 @@ func (w *OrderAccrualWorker) processOrder(orderNumber string) (bool, error) {
 
 // processOrders поочередно берет заказы из списка необработанных заказов
 // и для каждого проверяет статус
-func (w *OrderAccrualWorker) processOrders() error {
+func (w *OrderAccrualWorker) processOrders(ctx context.Context) error {
 	log.Info().Msg(fmt.Sprintf("processing orders list: %v", w.unprocessedOrders))
 	var tmpOrders []string
 
 	for _, orderNumber := range w.unprocessedOrders {
-		orderProcessed, err := w.processOrder(orderNumber)
-		if err != nil {
-			return err
-		}
-		if !orderProcessed {
-			tmpOrders = append(tmpOrders, orderNumber)
+		select {
+		// на каждом шаге проверяем, нужно ли завершать работу
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+			orderProcessed, err := w.processOrder(ctx, orderNumber)
+			if err != nil {
+				return err
+			}
+			if !orderProcessed {
+				tmpOrders = append(tmpOrders, orderNumber)
+			}
 		}
 	}
 
@@ -107,20 +109,36 @@ func (w *OrderAccrualWorker) processOrders() error {
 	return nil
 }
 
-func (w *OrderAccrualWorker) Run() {
+func (w *OrderAccrualWorker) Run(ctx context.Context, wg *sync.WaitGroup) {
+	defer wg.Done()
 	for {
 		// если необработанных заказов нет, то просто ожидаем, когда придет новый заказ
 		if len(w.unprocessedOrders) == 0 {
 			log.Info().Msg("waiting for new order number")
+			select {
+			case orderNumber, ok := <-w.ordersCh:
+				if !ok {
+					log.Info().Msg("orders worker stops - order chan is closed")
+					return
+				}
+				w.unprocessedOrders = append(w.unprocessedOrders, orderNumber)
+			case <-ctx.Done():
+				log.Info().Msg("orders worker stops - context is done")
+				return
+			}
 			orderNumber := <-w.ordersCh
 			w.unprocessedOrders = append(w.unprocessedOrders, orderNumber)
 		}
 		select {
-		case orderNumber := <-w.ordersCh:
+		case orderNumber, ok := <-w.ordersCh:
+			if !ok {
+				log.Info().Msg("orders worker stops - order chan is closed")
+				return
+			}
 			log.Info().Msg(fmt.Sprintf("receiving new order '%s' in accrual worker", orderNumber))
 			w.unprocessedOrders = append(w.unprocessedOrders, orderNumber)
 		default:
-			err := w.processOrders()
+			err := w.processOrders(ctx)
 			if err != nil {
 				log.Error().Msg(fmt.Sprintf("processing orders failed - %v", err.Error()))
 				return

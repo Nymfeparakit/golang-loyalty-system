@@ -1,6 +1,7 @@
 package workers
 
 import (
+	"context"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -54,7 +55,8 @@ func TestOrderAccrualWorker_processOrder(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 			accrualCalculatorMock := mock_workers.NewMockAccrualCalculator(ctrl)
-			accrualCalculatorMock.EXPECT().GetOrderAccrualRes(orderNumber).Return(tt.accrualRes, nil)
+			ctx := context.Background()
+			accrualCalculatorMock.EXPECT().GetOrderAccrualRes(ctx, orderNumber).Return(tt.accrualRes, nil)
 			userServiceMock := mock_workers.NewMockUserService(ctrl)
 			if tt.shouldIncreaseBalance {
 				userServiceMock.EXPECT().IncreaseBalanceForOrder(
@@ -72,7 +74,7 @@ func TestOrderAccrualWorker_processOrder(t *testing.T) {
 			orderWorker := NewOrderAccrualWorker(
 				make(chan string), userServiceMock, orderServiceMock, accrualCalculatorMock, []string{},
 			)
-			actualRes, err := orderWorker.processOrder(orderNumber)
+			actualRes, err := orderWorker.processOrder(ctx, orderNumber)
 			require.NoError(t, err)
 			assert.Equal(t, tt.wantResult, actualRes)
 		})

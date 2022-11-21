@@ -5,6 +5,7 @@
 package mock_workers
 
 import (
+	context "context"
 	domain "gophermart/internal/app/domain"
 	reflect "reflect"
 
@@ -35,30 +36,30 @@ func (m *MockAccrualCalculator) EXPECT() *MockAccrualCalculatorMockRecorder {
 }
 
 // CreateOrderForCalculation mocks base method.
-func (m *MockAccrualCalculator) CreateOrderForCalculation(arg0 string) error {
+func (m *MockAccrualCalculator) CreateOrderForCalculation(arg0 context.Context, arg1 string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateOrderForCalculation", arg0)
+	ret := m.ctrl.Call(m, "CreateOrderForCalculation", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // CreateOrderForCalculation indicates an expected call of CreateOrderForCalculation.
-func (mr *MockAccrualCalculatorMockRecorder) CreateOrderForCalculation(arg0 interface{}) *gomock.Call {
+func (mr *MockAccrualCalculatorMockRecorder) CreateOrderForCalculation(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateOrderForCalculation", reflect.TypeOf((*MockAccrualCalculator)(nil).CreateOrderForCalculation), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateOrderForCalculation", reflect.TypeOf((*MockAccrualCalculator)(nil).CreateOrderForCalculation), arg0, arg1)
 }
 
 // GetOrderAccrualRes mocks base method.
-func (m *MockAccrualCalculator) GetOrderAccrualRes(arg0 string) (*domain.AccrualCalculationRes, error) {
+func (m *MockAccrualCalculator) GetOrderAccrualRes(arg0 context.Context, arg1 string) (*domain.AccrualCalculationRes, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetOrderAccrualRes", arg0)
+	ret := m.ctrl.Call(m, "GetOrderAccrualRes", arg0, arg1)
 	ret0, _ := ret[0].(*domain.AccrualCalculationRes)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetOrderAccrualRes indicates an expected call of GetOrderAccrualRes.
-func (mr *MockAccrualCalculatorMockRecorder) GetOrderAccrualRes(arg0 interface{}) *gomock.Call {
+func (mr *MockAccrualCalculatorMockRecorder) GetOrderAccrualRes(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrderAccrualRes", reflect.TypeOf((*MockAccrualCalculator)(nil).GetOrderAccrualRes), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrderAccrualRes", reflect.TypeOf((*MockAccrualCalculator)(nil).GetOrderAccrualRes), arg0, arg1)
 }
