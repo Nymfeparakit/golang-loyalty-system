@@ -2,11 +2,16 @@ package workers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/rs/zerolog/log"
 	"gophermart/internal/app/domain"
+	"gophermart/internal/app/services"
 	"sync"
+	"time"
 )
+
+const retryAfterTime = time.Second * 60
 
 type UserService interface {
 	IncreaseBalanceForOrder(ctx context.Context, orderNumber string, accrual float32) error
@@ -46,6 +51,10 @@ func NewOrderAccrualWorker(
 func (w *OrderAccrualWorker) processOrder(ctx context.Context, orderNumber string) (bool, error) {
 	// получаем сведения по начислению баллов за заказ
 	accrualRes, err := w.accrualCalculator.GetOrderAccrualRes(ctx, orderNumber)
+	if errors.Is(err, services.ErrTooManyRequests) {
+		time.Sleep(retryAfterTime)
+		accrualRes, err = w.accrualCalculator.GetOrderAccrualRes(ctx, orderNumber)
+	}
 	if err != nil {
 		return false, err
 	}
