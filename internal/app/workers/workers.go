@@ -23,20 +23,16 @@ type AccrualCalculator interface {
 
 type Runner struct {
 	ordersWorkersWG *sync.WaitGroup
-	requestWorkerWG *sync.WaitGroup
 }
 
 func NewRunner() *Runner {
-	return &Runner{ordersWorkersWG: &sync.WaitGroup{}, requestWorkerWG: &sync.WaitGroup{}}
+	return &Runner{ordersWorkersWG: &sync.WaitGroup{}}
 }
 
 func (r *Runner) StartWorkers(
 	ctx context.Context, db *sqlx.DB, config *configs.Config, ordersCh chan string, orderService *services.OrderService,
 ) {
-	requestsWorker := NewRateLimitedReqWorker()
-	r.requestWorkerWG.Add(1)
-	go requestsWorker.Run(ctx, r.requestWorkerWG)
-	accrualCalculator := services.NewAccrualCalculationService(config.AccrualSystemAddr, requestsWorker)
+	accrualCalculator := services.NewAccrualCalculationService(config.AccrualSystemAddr)
 
 	userRepository := repositories.NewUserRepository(db)
 	userService := services.NewUserService(userRepository)
@@ -62,9 +58,6 @@ func (r *Runner) WaitWorkersToStop(timeout time.Duration) bool {
 		log.Info().Msg("waiting orders workers to stop...")
 		r.ordersWorkersWG.Wait()
 		log.Info().Msg("all orders workers stopped!")
-		log.Info().Msg("waiting for request worker to stop...")
-		r.requestWorkerWG.Wait()
-		log.Info().Msg("request worker stopped!")
 	}()
 	select {
 	case <-notifyCh:
