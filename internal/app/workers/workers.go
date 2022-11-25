@@ -3,11 +3,9 @@ package workers
 import (
 	"context"
 	"fmt"
-	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog/log"
 	"gophermart/internal/app/configs"
 	"gophermart/internal/app/domain"
-	"gophermart/internal/app/repositories"
 	"gophermart/internal/app/services"
 	"sync"
 	"time"
@@ -24,23 +22,20 @@ type AccrualCalculator interface {
 
 type Runner struct {
 	ordersWorkersWG *sync.WaitGroup
-	requestWorkerWG *sync.WaitGroup
 }
 
 func NewRunner() *Runner {
-	return &Runner{ordersWorkersWG: &sync.WaitGroup{}, requestWorkerWG: &sync.WaitGroup{}}
+	return &Runner{ordersWorkersWG: &sync.WaitGroup{}}
 }
 
 func (r *Runner) StartWorkers(
-	ctx context.Context, db *sqlx.DB, config *configs.Config, ordersCh chan string, orderService *services.OrderService,
+	ctx context.Context,
+	config *configs.Config,
+	ordersCh chan string,
+	orderService *services.OrderService,
+	userService *services.UserService,
 ) {
-	requestsWorker := NewRateLimitedReqWorker()
-	r.requestWorkerWG.Add(1)
-	go requestsWorker.Run(ctx, r.requestWorkerWG)
-	accrualCalculator := services.NewAccrualCalculationService(config.AccrualSystemAddr, requestsWorker)
-
-	userRepository := repositories.NewUserRepository(db)
-	userService := services.NewUserService(userRepository)
+	accrualCalculator := services.NewAccrualCalculationService(config.AccrualSystemAddr)
 
 	processOrdersCh := make(chan string, 100)
 	log.Info().Msg("starting register orders worker")
@@ -78,9 +73,6 @@ func (r *Runner) WaitWorkersToStop(timeout time.Duration) bool {
 		log.Info().Msg("waiting orders workers to stop...")
 		r.ordersWorkersWG.Wait()
 		log.Info().Msg("all orders workers stopped!")
-		log.Info().Msg("waiting for request worker to stop...")
-		r.requestWorkerWG.Wait()
-		log.Info().Msg("request worker stopped!")
 	}()
 	select {
 	case <-notifyCh:

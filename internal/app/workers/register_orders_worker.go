@@ -24,7 +24,8 @@ func (w *RegisterOrdersWorker) Run(ctx context.Context, wg *sync.WaitGroup) {
 		select {
 		case orderNumber, ok := <-w.registerOrderCh:
 			if !ok {
-				continue
+				log.Info().Msg("stopping worker registering orders - register orders channel closed")
+				return
 			}
 			log.Info().Msg(fmt.Sprintf("got new order '%s' for registration", orderNumber))
 			err := w.accrualCalculator.CreateOrderForCalculation(ctx, orderNumber)

@@ -7,21 +7,20 @@ import (
 	"fmt"
 	"github.com/rs/zerolog/log"
 	"gophermart/internal/app/domain"
+	"io"
 	"net/http"
 	"strconv"
+	"time"
 )
 
-type RequestsWorker interface {
-	HandleRequest(ctx context.Context, req *http.Request) (*domain.ResponseWithReadBody, error)
-}
+const retryAfterTime = time.Second * 60
 
 type AccrualCalculationService struct {
 	accrualSystemAddr string
-	requestsWorker    RequestsWorker
 }
 
-func NewAccrualCalculationService(accrualSystemAddr string, worker RequestsWorker) *AccrualCalculationService {
-	return &AccrualCalculationService{accrualSystemAddr: accrualSystemAddr, requestsWorker: worker}
+func NewAccrualCalculationService(accrualSystemAddr string) *AccrualCalculationService {
+	return &AccrualCalculationService{accrualSystemAddr: accrualSystemAddr}
 }
 
 type orderInput struct {
@@ -42,16 +41,25 @@ func (s *AccrualCalculationService) CreateOrderForCalculation(ctx context.Contex
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	res, err := s.requestsWorker.HandleRequest(ctx, req)
+	client := http.DefaultClient
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
 
-	respStatusCode := res.Response.StatusCode
+	respStatusCode := resp.StatusCode
 	// 409 статус может быть в случае, если заказ ранее уже был создан в системе начисления
 	if respStatusCode != http.StatusAccepted && respStatusCode != http.StatusConflict {
-		respBody := string(res.ReadBody)
-		return fmt.Errorf("creating order for accrual calculation failed: status code - %d, body - %v", respStatusCode, respBody)
+		bodyBytes, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return err
+		}
+		err = resp.Body.Close()
+		if err != nil {
+			return err
+		}
+		bodyString := string(bodyBytes)
+		return fmt.Errorf("creating order for accrual calculation failed: status code - %d, body - %v", respStatusCode, bodyString)
 	}
 
 	return nil
@@ -65,12 +73,20 @@ func (s *AccrualCalculationService) GetOrderAccrualRes(ctx context.Context, orde
 		log.Error().Msg("request to accrual system failed: " + err.Error())
 		return nil, err
 	}
-	res, err := s.requestsWorker.HandleRequest(ctx, req)
+	client := http.DefaultClient
+	resp, err := client.Do(req)
 	if err != nil {
-		log.Error().Msg("request to accrual system failed: " + err.Error())
 		return nil, err
 	}
-	respStatusCode := res.Response.StatusCode
+
+	respStatusCode := resp.StatusCode
+	if respStatusCode == http.StatusTooManyRequests {
+		<-time.After(retryAfterTime)
+		resp, err = client.Do(req)
+		if err != nil {
+			return nil, err
+		}
+	}
 	if respStatusCode != http.StatusOK {
 		errMsg := "request to accrual system failed: status of response - " + strconv.Itoa(respStatusCode)
 		log.Error().Msg(errMsg)
@@ -78,12 +94,20 @@ func (s *AccrualCalculationService) GetOrderAccrualRes(ctx context.Context, orde
 	}
 
 	var accrualRes domain.AccrualCalculationRes
-	log.Info().Msg(fmt.Sprintf("accrual result is: %v", res.ReadBody))
-	err = json.NewDecoder(bytes.NewReader(res.ReadBody)).Decode(&accrualRes)
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	err = resp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+	err = json.NewDecoder(bytes.NewReader(bodyBytes)).Decode(&accrualRes)
 	if err != nil {
 		log.Error().Msg("request to accrual system failed: " + err.Error())
 		return nil, err
 	}
+	log.Info().Msg(fmt.Sprintf("accrual result is: %v", accrualRes))
 
 	return &accrualRes, nil
 }

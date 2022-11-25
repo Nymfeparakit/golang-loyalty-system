@@ -55,7 +55,7 @@ func (w *OrderAccrualWorker) processOrder(ctx context.Context, orderNumber strin
 	newOrderStatus := accrualRes.Status
 	orderAccrual := accrualRes.Accrual
 	log.Info().Msg(fmt.Sprintf("updating order status: %v - %v", orderNumber, newOrderStatus))
-	err = w.orderService.UpdateOrderStatusAndAccrual(context.Background(), orderNumber, newOrderStatus, orderAccrual)
+	err = w.orderService.UpdateOrderStatusAndAccrual(ctx, orderNumber, newOrderStatus, orderAccrual)
 	if err != nil {
 		log.Error().Msg(fmt.Sprintf("failed to update order status: %v", err.Error()))
 		return false, err
@@ -64,7 +64,7 @@ func (w *OrderAccrualWorker) processOrder(ctx context.Context, orderNumber strin
 	// если заказ оказался обработанным, то прибавляем пользователю баланс по этому заказу
 	if newOrderStatus == domain.OrderProcessedStatus && accrualRes.Accrual != 0 {
 		log.Info().Msg(fmt.Sprintf("increasing balance for order '%s', accrual - %f", orderNumber, accrualRes.Accrual))
-		err = w.userService.IncreaseBalanceForOrder(context.Background(), orderNumber, accrualRes.Accrual)
+		err = w.userService.IncreaseBalanceForOrder(ctx, orderNumber, accrualRes.Accrual)
 		if err != nil {
 			log.Error().Msg("increasing user balance failed: " + err.Error())
 			return false, err

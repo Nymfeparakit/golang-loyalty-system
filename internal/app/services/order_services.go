@@ -2,8 +2,6 @@ package services
 
 import (
 	"context"
-	"fmt"
-	"github.com/rs/zerolog/log"
 	"gophermart/internal/app/domain"
 	"strconv"
 	"time"
@@ -14,23 +12,6 @@ type OrderRepository interface {
 	GetOrdersByUser(ctx context.Context, user *domain.UserDTO) ([]*domain.OrderDTO, error)
 	UpdateOrderStatusAndAccrual(ctx context.Context, orderNumber string, orderStatus string, accrual float32) error
 	GetOrdersWithStatusesIn(ctx context.Context, statuses []string) ([]*domain.OrderDTO, error)
-}
-
-type OrderSender struct {
-	ordersCh chan string
-}
-
-func NewOrderSender(ordersCh chan string) *OrderSender {
-	return &OrderSender{ordersCh: ordersCh}
-}
-
-func (s *OrderSender) SendOrderToWorkers(orderNumber string) {
-	log.Info().Msg(fmt.Sprintf("sending to workers order '%s'", orderNumber))
-	s.ordersCh <- orderNumber
-}
-
-func (s *OrderSender) Stop() {
-	close(s.ordersCh)
 }
 
 type OrderService struct {

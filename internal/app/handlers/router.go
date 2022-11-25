@@ -9,12 +9,12 @@ import (
 	"gophermart/internal/app/services"
 )
 
-func InitRouter(db *sqlx.DB, cfg *configs.Config, orderService OrderService) *gin.Engine {
+func InitRouter(
+	db *sqlx.DB, cfg *configs.Config, orderService *services.OrderService, userService *services.UserService,
+) *gin.Engine {
 	r := gin.Default()
 	r.Use(middlewares.DecompressingRequestMiddleware())
 	r.Use(middlewares.CompressingResponseMiddleware())
-	userRepository := repositories.NewUserRepository(db)
-	userService := services.NewUserService(userRepository)
 	tokenService := services.NewAuthJWTTokenService(cfg.AuthSecretKey)
 	registrationService := services.NewRegistrationService(userService, tokenService)
 	authService := services.NewAuthService(userService, tokenService)
