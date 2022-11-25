@@ -7,7 +7,7 @@ import (
 	"gophermart/internal/app/services"
 )
 
-func InitRouter(cfg *configs.Config, orderService OrderService, userService *services.UserService) *gin.Engine {
+func InitRouter(cfg *configs.Config, orderService *services.OrderService, userService *services.UserService) *gin.Engine {
 	r := gin.Default()
 	r.Use(middlewares.DecompressingRequestMiddleware())
 	r.Use(middlewares.CompressingResponseMiddleware())
