@@ -10,7 +10,10 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"time"
 )
+
+const retryAfterTime = time.Second * 60
 
 type AccrualCalculationService struct {
 	accrualSystemAddr string
@@ -78,7 +81,11 @@ func (s *AccrualCalculationService) GetOrderAccrualRes(ctx context.Context, orde
 
 	respStatusCode := resp.StatusCode
 	if respStatusCode == http.StatusTooManyRequests {
-		return nil, ErrTooManyRequests
+		<-time.After(retryAfterTime)
+		resp, err = client.Do(req)
+		if err != nil {
+			return nil, err
+		}
 	}
 	if respStatusCode != http.StatusOK {
 		errMsg := "request to accrual system failed: status of response - " + strconv.Itoa(respStatusCode)
