@@ -2,11 +2,9 @@ package workers
 
 import (
 	"context"
-	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog/log"
 	"gophermart/internal/app/configs"
 	"gophermart/internal/app/domain"
-	"gophermart/internal/app/repositories"
 	"gophermart/internal/app/services"
 	"sync"
 	"time"
@@ -30,12 +28,13 @@ func NewRunner() *Runner {
 }
 
 func (r *Runner) StartWorkers(
-	ctx context.Context, db *sqlx.DB, config *configs.Config, ordersCh chan string, orderService *services.OrderService,
+	ctx context.Context,
+	config *configs.Config,
+	ordersCh chan string,
+	orderService *services.OrderService,
+	userService *services.UserService,
 ) {
 	accrualCalculator := services.NewAccrualCalculationService(config.AccrualSystemAddr)
-
-	userRepository := repositories.NewUserRepository(db)
-	userService := services.NewUserService(userRepository)
 
 	processOrdersCh := make(chan string, 100)
 	log.Info().Msg("starting register orders worker")

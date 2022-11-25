@@ -12,7 +12,6 @@ import (
 	"gophermart/internal/app/services"
 	"gophermart/internal/app/workers"
 	"net/http"
-	"os"
 	"os/signal"
 	"syscall"
 	"time"
@@ -21,6 +20,11 @@ import (
 func initOrderService(db *sqlx.DB, orderSender *services.OrderSender) *services.OrderService {
 	orderRepository := repositories.NewOrderRepository(db)
 	return services.NewOrderService(orderRepository, orderSender)
+}
+
+func initUserService(db *sqlx.DB) *services.UserService {
+	userRepository := repositories.NewUserRepository(db)
+	return services.NewUserService(userRepository)
 }
 
 func main() {
@@ -42,12 +46,13 @@ func main() {
 	ordersCh := make(chan string)
 	orderSender := services.NewOrderSender(ordersCh)
 	orderService := initOrderService(db, orderSender)
+	userService := initUserService(db)
 	// Инициируем хэндлеры для ендпоинтов
-	router := handlers.InitRouter(db, cfg, orderService)
+	router := handlers.InitRouter(cfg, orderService, userService)
 	// Запускаем воркеров
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	runner := workers.NewRunner()
-	runner.StartWorkers(ctx, db, cfg, ordersCh, orderService)
+	runner.StartWorkers(ctx, cfg, ordersCh, orderService, userService)
 
 	srv := &http.Server{
 		Addr:    cfg.RunAddr,
@@ -61,9 +66,9 @@ func main() {
 		}
 	}()
 
-	quitCh := make(chan os.Signal, 1)
-	signal.Notify(quitCh, syscall.SIGINT, syscall.SIGTERM)
-	<-quitCh
+	notifyCtx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	<-notifyCtx.Done()
+	stop()
 	log.Info().Msg("starting graceful shutdown...")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

@@ -2,19 +2,15 @@ package handlers
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/jmoiron/sqlx"
 	"gophermart/internal/app/configs"
 	"gophermart/internal/app/middlewares"
-	"gophermart/internal/app/repositories"
 	"gophermart/internal/app/services"
 )
 
-func InitRouter(db *sqlx.DB, cfg *configs.Config, orderService OrderService) *gin.Engine {
+func InitRouter(cfg *configs.Config, orderService OrderService, userService *services.UserService) *gin.Engine {
 	r := gin.Default()
 	r.Use(middlewares.DecompressingRequestMiddleware())
 	r.Use(middlewares.CompressingResponseMiddleware())
-	userRepository := repositories.NewUserRepository(db)
-	userService := services.NewUserService(userRepository)
 	tokenService := services.NewAuthJWTTokenService(cfg.AuthSecretKey)
 	registrationService := services.NewRegistrationService(userService, tokenService)
 	authService := services.NewAuthService(userService, tokenService)
