@@ -36,15 +36,15 @@ func (r *Runner) StartWorkers(
 ) {
 	accrualCalculator := services.NewAccrualCalculationService(config.AccrualSystemAddr)
 
-	//processOrdersCh := make(chan string, 100)
-	//log.Info().Msg("starting register orders worker")
-	//worker := NewRegisterOrdersWorker(ordersCh, processOrdersCh, accrualCalculator)
-	//r.ordersWorkersWG.Add(1)
-	//go worker.Run(ctx, r.ordersWorkersWG)
+	processOrdersCh := make(chan string, 100)
+	log.Info().Msg("starting register orders worker")
+	worker := NewRegisterOrdersWorker(ordersCh, processOrdersCh, accrualCalculator)
+	r.ordersWorkersWG.Add(1)
+	go worker.Run(ctx, r.ordersWorkersWG)
 
 	log.Info().Msg("starting orders accrual workers")
 	for i := 0; i < accrualWorkersNum; i++ {
-		worker := NewOrderAccrualWorker(ordersCh, userService, orderService, accrualCalculator)
+		worker := NewOrderAccrualWorker(processOrdersCh, userService, orderService, accrualCalculator)
 		r.ordersWorkersWG.Add(1)
 		go worker.Run(ctx, r.ordersWorkersWG)
 	}
