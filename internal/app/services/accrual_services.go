@@ -78,6 +78,12 @@ func (s *AccrualCalculationService) GetOrderAccrualRes(ctx context.Context, orde
 	if err != nil {
 		return nil, err
 	}
+	defer func() {
+		err := resp.Body.Close()
+		if err != nil {
+			log.Error().Msg(fmt.Sprintf("error on response body close: %v", err.Error()))
+		}
+	}()
 
 	respStatusCode := resp.StatusCode
 	if respStatusCode == http.StatusTooManyRequests {
@@ -86,6 +92,12 @@ func (s *AccrualCalculationService) GetOrderAccrualRes(ctx context.Context, orde
 		if err != nil {
 			return nil, err
 		}
+		defer func() {
+			err := resp.Body.Close()
+			if err != nil {
+				log.Error().Msg(fmt.Sprintf("error on response body close: %v", err.Error()))
+			}
+		}()
 	}
 	if respStatusCode != http.StatusOK {
 		errMsg := "request to accrual system failed: status of response - " + strconv.Itoa(respStatusCode)
@@ -95,10 +107,6 @@ func (s *AccrualCalculationService) GetOrderAccrualRes(ctx context.Context, orde
 
 	var accrualRes domain.AccrualCalculationRes
 	bodyBytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	err = resp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
