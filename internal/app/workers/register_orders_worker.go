@@ -28,7 +28,7 @@ func (w *RegisterOrdersWorker) Run(ctx context.Context, wg *sync.WaitGroup) {
 				return
 			}
 			log.Info().Msg(fmt.Sprintf("got new order '%s' for registration", orderNumber))
-			err := w.accrualCalculator.CreateOrderForCalculation(ctx, orderNumber)
+			err := w.accrualCalculator.CreateOrderForCalculation(orderNumber)
 			if err != nil {
 				log.Error().Msg(fmt.Sprintf("creating order for accrual failed - %v", err.Error()))
 				return
