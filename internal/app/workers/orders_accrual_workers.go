@@ -6,6 +6,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"gophermart/internal/app/domain"
 	"sync"
+	"time"
 )
 
 type UserService interface {
@@ -49,6 +50,8 @@ func (w *OrderAccrualWorker) processOrder(ctx context.Context, orderNumber strin
 	if err != nil {
 		return false, err
 	}
+	// NOTE: задержка добавлена для автотестов
+	time.Sleep(3 * time.Second)
 
 	// обновляем статус заказа
 	newOrderStatus := accrualRes.Status
