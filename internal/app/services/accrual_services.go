@@ -78,13 +78,15 @@ func (s *AccrualCalculationService) GetOrderAccrualRes(ctx context.Context, orde
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		err := resp.Body.Close()
+		if err != nil {
+			log.Error().Msg(fmt.Sprintf("error on response body close: %v", err.Error()))
+		}
+	}()
 
 	respStatusCode := resp.StatusCode
 	if respStatusCode == http.StatusTooManyRequests {
-		if err != nil {
-			return nil, err
-		}
 		<-time.After(retryAfterTime)
 		resp, err = client.Do(req)
 		if err != nil {
