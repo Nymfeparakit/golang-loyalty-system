@@ -78,10 +78,10 @@ func (s *AccrualCalculationService) GetOrderAccrualRes(ctx context.Context, orde
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 
 	respStatusCode := resp.StatusCode
 	if respStatusCode == http.StatusTooManyRequests {
-		err := resp.Body.Close()
 		if err != nil {
 			return nil, err
 		}
@@ -90,8 +90,8 @@ func (s *AccrualCalculationService) GetOrderAccrualRes(ctx context.Context, orde
 		if err != nil {
 			return nil, err
 		}
+		defer resp.Body.Close()
 	}
-	defer resp.Body.Close()
 	if respStatusCode != http.StatusOK {
 		errMsg := "request to accrual system failed: status of response - " + strconv.Itoa(respStatusCode)
 		log.Error().Msg(errMsg)
