@@ -92,7 +92,12 @@ func (s *AccrualCalculationService) GetOrderAccrualRes(ctx context.Context, orde
 		if err != nil {
 			return nil, err
 		}
-		defer resp.Body.Close()
+		defer func() {
+			err := resp.Body.Close()
+			if err != nil {
+				log.Error().Msg(fmt.Sprintf("error on response body close: %v", err.Error()))
+			}
+		}()
 	}
 	if respStatusCode != http.StatusOK {
 		errMsg := "request to accrual system failed: status of response - " + strconv.Itoa(respStatusCode)
