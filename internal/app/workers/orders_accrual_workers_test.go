@@ -56,7 +56,7 @@ func TestOrderAccrualWorker_processOrder(t *testing.T) {
 			defer ctrl.Finish()
 			accrualCalculatorMock := mock_workers.NewMockAccrualCalculator(ctrl)
 			ctx := context.Background()
-			accrualCalculatorMock.EXPECT().GetOrderAccrualRes(ctx, orderNumber).Return(tt.accrualRes, nil)
+			accrualCalculatorMock.EXPECT().GetOrderAccrualRes(orderNumber).Return(tt.accrualRes, nil)
 			userServiceMock := mock_workers.NewMockUserService(ctrl)
 			if tt.shouldIncreaseBalance {
 				userServiceMock.EXPECT().IncreaseBalanceForOrder(

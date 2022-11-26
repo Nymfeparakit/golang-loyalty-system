@@ -16,8 +16,8 @@ const (
 )
 
 type AccrualCalculator interface {
-	CreateOrderForCalculation(ctx context.Context, orderNumber string) error
-	GetOrderAccrualRes(ctx context.Context, orderNumber string) (*domain.AccrualCalculationRes, error)
+	CreateOrderForCalculation(orderNumber string) error
+	GetOrderAccrualRes(orderNumber string) (*domain.AccrualCalculationRes, error)
 }
 
 type Runner struct {

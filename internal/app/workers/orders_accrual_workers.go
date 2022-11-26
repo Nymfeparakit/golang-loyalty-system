@@ -46,7 +46,7 @@ func NewOrderAccrualWorker(
 // возвращает флаг processed, указывающий на то, был ли обработан заказ
 func (w *OrderAccrualWorker) processOrder(ctx context.Context, orderNumber string) (bool, error) {
 	// получаем сведения по начислению баллов за заказ
-	accrualRes, err := w.accrualCalculator.GetOrderAccrualRes(ctx, orderNumber)
+	accrualRes, err := w.accrualCalculator.GetOrderAccrualRes(orderNumber)
 	if err != nil {
 		return false, err
 	}

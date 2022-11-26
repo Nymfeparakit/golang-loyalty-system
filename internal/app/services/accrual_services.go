@@ -2,7 +2,6 @@ package services
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/rs/zerolog/log"
@@ -27,7 +26,7 @@ type orderInput struct {
 	Order string `json:"order"`
 }
 
-func (s *AccrualCalculationService) CreateOrderForCalculation(ctx context.Context, orderNumber string) error {
+func (s *AccrualCalculationService) CreateOrderForCalculation(orderNumber string) error {
 	requestURL := s.accrualSystemAddr + "/api/orders"
 	reqBody, err := json.Marshal(&orderInput{Order: orderNumber})
 	reqBodyReader := bytes.NewReader(reqBody)
@@ -65,7 +64,7 @@ func (s *AccrualCalculationService) CreateOrderForCalculation(ctx context.Contex
 	return nil
 }
 
-func (s *AccrualCalculationService) GetOrderAccrualRes(ctx context.Context, orderNumber string) (*domain.AccrualCalculationRes, error) {
+func (s *AccrualCalculationService) GetOrderAccrualRes(orderNumber string) (*domain.AccrualCalculationRes, error) {
 	requestURL := s.accrualSystemAddr + "/api/orders/"
 	// проверяем, был ли заказ обработан
 	req, err := http.NewRequest(http.MethodGet, requestURL+orderNumber, nil)
