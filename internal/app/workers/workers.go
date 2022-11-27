@@ -3,7 +3,6 @@ package workers
 import (
 	"context"
 	"github.com/rs/zerolog/log"
-	"gophermart/internal/app/configs"
 	"gophermart/internal/app/domain"
 	"gophermart/internal/app/services"
 	"sync"
@@ -29,22 +28,20 @@ func NewRunner() *Runner {
 
 func (r *Runner) StartWorkers(
 	ctx context.Context,
-	config *configs.Config,
 	ordersCh chan string,
 	orderService *services.OrderService,
 	userService *services.UserService,
+	calculator *services.AccrualCalculationService,
 ) {
-	accrualCalculator := services.NewAccrualCalculationService(config.AccrualSystemAddr)
-
 	processOrdersCh := make(chan string, 100)
 	log.Info().Msg("starting register orders worker")
-	worker := NewRegisterOrdersWorker(ordersCh, processOrdersCh, accrualCalculator)
+	worker := NewRegisterOrdersWorker(ordersCh, processOrdersCh, calculator)
 	r.ordersWorkersWG.Add(1)
 	go worker.Run(ctx, r.ordersWorkersWG)
 
 	log.Info().Msg("starting orders accrual workers")
 	for i := 0; i < accrualWorkersNum; i++ {
-		worker := NewOrderAccrualWorker(processOrdersCh, userService, orderService, accrualCalculator)
+		worker := NewOrderAccrualWorker(processOrdersCh, userService, orderService, calculator)
 		r.ordersWorkersWG.Add(1)
 		go worker.Run(ctx, r.ordersWorkersWG)
 	}

@@ -13,12 +13,16 @@ type OrderRepository interface {
 	UpdateOrderStatus(ctx context.Context, orderNumber string, orderStatus string) error
 }
 
-type OrderService struct {
-	orderRepository OrderRepository
-	orderSender     *OrderSender
+type OrderSender interface {
+	SendOrderToWorkers(orderNumber string)
 }
 
-func NewOrderService(orderRepository OrderRepository, orderSender *OrderSender) *OrderService {
+type OrderService struct {
+	orderRepository OrderRepository
+	orderSender     OrderSender
+}
+
+func NewOrderService(orderRepository OrderRepository, orderSender OrderSender) *OrderService {
 	return &OrderService{orderRepository: orderRepository, orderSender: orderSender}
 }
 
