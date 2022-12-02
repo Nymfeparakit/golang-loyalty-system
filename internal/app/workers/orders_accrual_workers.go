@@ -6,7 +6,6 @@ import (
 	"github.com/rs/zerolog/log"
 	"gophermart/internal/app/domain"
 	"sync"
-	"time"
 )
 
 type UserService interface {
@@ -51,8 +50,6 @@ func (w *OrderAccrualWorker) processOrder(ctx context.Context, orderNumber strin
 	if err != nil {
 		return false, err
 	}
-	// NOTE: задержка добавлена для автотестов
-	time.Sleep(3 * time.Second)
 
 	// обновляем статус заказа
 	newOrderStatus := accrualRes.Status
@@ -99,7 +96,7 @@ func (w *OrderAccrualWorker) processOrders(ctx context.Context) error {
 		default:
 			orderProcessed, err := w.processOrder(ctx, orderNumber)
 			if err != nil {
-				return err
+				log.Error().Msg(fmt.Sprintf("failed to process order: %v", err.Error()))
 			}
 			if !orderProcessed {
 				tmpOrders = append(tmpOrders, orderNumber)
