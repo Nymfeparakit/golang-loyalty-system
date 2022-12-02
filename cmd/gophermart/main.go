@@ -17,7 +17,7 @@ import (
 	"time"
 )
 
-func initOrderService(db *sqlx.DB, orderSender services.OrderSender) *services.OrderService {
+func initOrderService(db *sqlx.DB, orderSender *services.OrderSender) *services.OrderService {
 	orderRepository := repositories.NewOrderRepository(db)
 	return services.NewOrderService(orderRepository, orderSender)
 }
@@ -44,15 +44,15 @@ func main() {
 	defer db.Close()
 
 	ordersCh := make(chan string)
-	accrualService := services.NewAccrualCalculationService(cfg.AccrualSystemAddr, ordersCh)
-	orderService := initOrderService(db, accrualService)
+	orderSender := services.NewOrderSender(ordersCh)
+	orderService := initOrderService(db, orderSender)
 	userService := initUserService(db)
 	// Инициируем хэндлеры для ендпоинтов
 	router := handlers.InitRouter(cfg, orderService, userService)
 	// Запускаем воркеров
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	runner := workers.NewRunner()
-	runner.StartWorkers(ctx, ordersCh, orderService, userService, accrualService)
+	runner.StartWorkers(ctx, cfg, ordersCh, orderService, userService)
 
 	srv := &http.Server{
 		Addr:    cfg.RunAddr,
@@ -78,7 +78,7 @@ func main() {
 	}
 
 	// после остановки сервера останавливаем отправку ордеров воркерам
-	accrualService.Stop()
+	orderSender.Stop()
 	// выполняем остановку всех воркеров
 	cancelFunc()
 	if ok := runner.WaitWorkersToStop(5 * time.Second); !ok {

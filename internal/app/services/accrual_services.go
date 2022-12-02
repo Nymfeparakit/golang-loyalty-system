@@ -16,11 +16,10 @@ const retryAfterTime = time.Second * 60
 
 type AccrualCalculationService struct {
 	accrualSystemAddr string
-	ordersCh          chan string
 }
 
-func NewAccrualCalculationService(accrualSystemAddr string, ordersCh chan string) *AccrualCalculationService {
-	return &AccrualCalculationService{accrualSystemAddr: accrualSystemAddr, ordersCh: ordersCh}
+func NewAccrualCalculationService(accrualSystemAddr string) *AccrualCalculationService {
+	return &AccrualCalculationService{accrualSystemAddr: accrualSystemAddr}
 }
 
 type orderInput struct {
@@ -118,13 +117,4 @@ func (s *AccrualCalculationService) GetOrderAccrualRes(orderNumber string) (*dom
 	log.Info().Msg(fmt.Sprintf("accrual result is: %v", accrualRes))
 
 	return &accrualRes, nil
-}
-
-func (s *AccrualCalculationService) SendOrderToWorkers(orderNumber string) {
-	log.Info().Msg(fmt.Sprintf("sending to workers order '%s'", orderNumber))
-	s.ordersCh <- orderNumber
-}
-
-func (s *AccrualCalculationService) Stop() {
-	close(s.ordersCh)
 }
