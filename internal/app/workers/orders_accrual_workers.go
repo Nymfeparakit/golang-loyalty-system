@@ -90,7 +90,7 @@ func (w *OrderAccrualWorker) processOrders(ctx context.Context) error {
 		default:
 			orderProcessed, err := w.processOrder(ctx, orderNumber)
 			if err != nil {
-				return err
+				log.Error().Msg(fmt.Sprintf("failed to process order: %v", err.Error()))
 			}
 			if !orderProcessed {
 				tmpOrders = append(tmpOrders, orderNumber)
