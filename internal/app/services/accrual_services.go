@@ -49,20 +49,20 @@ func (s *AccrualCalculationService) CreateOrderForCalculation(orderNumber string
 
 	respStatusCode := resp.StatusCode
 	// 409 статус может быть в случае, если заказ ранее уже был создан в системе начисления
-	if respStatusCode != http.StatusAccepted && respStatusCode != http.StatusConflict {
-		bodyBytes, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return err
-		}
-		err = resp.Body.Close()
-		if err != nil {
-			return err
-		}
-		bodyString := string(bodyBytes)
-		return fmt.Errorf("creating order for accrual calculation failed: status code - %d, body - %v", respStatusCode, bodyString)
+	if respStatusCode == http.StatusAccepted || respStatusCode == http.StatusConflict {
+		return nil
 	}
 
-	return nil
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	err = resp.Body.Close()
+	if err != nil {
+		return err
+	}
+	bodyString := string(bodyBytes)
+	return fmt.Errorf("creating order for accrual calculation failed: status code - %d, body - %v", respStatusCode, bodyString)
 }
 
 func (s *AccrualCalculationService) GetOrderAccrualRes(orderNumber string) (*domain.AccrualCalculationRes, error) {
