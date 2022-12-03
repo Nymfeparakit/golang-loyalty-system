@@ -75,9 +75,15 @@ func (r *OrderRepository) UpdateOrderStatusAndAccrual(
 	orderNumber string,
 	orderStatus string,
 	accrual float32,
+	tx *sql.Tx,
 ) error {
 	query := `UPDATE user_order SET status=$1, accrual=$2 WHERE number=$3`
-	_, err := r.db.ExecContext(ctx, query, &orderStatus, &accrual, &orderNumber)
+	var err error
+	if tx != nil {
+		_, err = tx.ExecContext(ctx, query, &orderStatus, &accrual, &orderNumber)
+	} else {
+		_, err = r.db.ExecContext(ctx, query, &orderStatus, &accrual, &orderNumber)
+	}
 	if err != nil {
 		return err
 	}

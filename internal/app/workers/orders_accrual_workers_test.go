@@ -13,10 +13,11 @@ import (
 func TestOrderAccrualWorker_processOrder(t *testing.T) {
 	orderNumber := "123"
 	tests := []struct {
-		name                  string
-		accrualRes            *domain.AccrualCalculationRes
-		wantResult            bool
-		shouldIncreaseBalance bool
+		name                    string
+		accrualRes              *domain.AccrualCalculationRes
+		wantResult              bool
+		shouldIncreaseBalance   bool
+		shouldUpdateOrderStatus bool
 	}{
 		{
 			name: "order was processed, accrual is 0",
@@ -25,8 +26,9 @@ func TestOrderAccrualWorker_processOrder(t *testing.T) {
 				Status:  domain.OrderProcessedStatus,
 				Accrual: 0,
 			},
-			shouldIncreaseBalance: false,
-			wantResult:            true,
+			shouldIncreaseBalance:   false,
+			shouldUpdateOrderStatus: true,
+			wantResult:              true,
 		},
 		{
 			name: "order was processed, accrual is > 0",
@@ -35,8 +37,9 @@ func TestOrderAccrualWorker_processOrder(t *testing.T) {
 				Status:  domain.OrderProcessedStatus,
 				Accrual: 100,
 			},
-			shouldIncreaseBalance: true,
-			wantResult:            true,
+			shouldIncreaseBalance:   true,
+			shouldUpdateOrderStatus: false,
+			wantResult:              true,
 		},
 		{
 			name: "order wasn't processed",
@@ -44,8 +47,9 @@ func TestOrderAccrualWorker_processOrder(t *testing.T) {
 				Order:  orderNumber,
 				Status: domain.OrderProcessingStatus,
 			},
-			shouldIncreaseBalance: false,
-			wantResult:            false,
+			shouldIncreaseBalance:   false,
+			shouldUpdateOrderStatus: true,
+			wantResult:              false,
 		},
 	}
 
@@ -59,17 +63,19 @@ func TestOrderAccrualWorker_processOrder(t *testing.T) {
 			accrualCalculatorMock.EXPECT().GetOrderAccrualRes(orderNumber).Return(tt.accrualRes, nil)
 			userServiceMock := mock_workers.NewMockUserService(ctrl)
 			if tt.shouldIncreaseBalance {
-				userServiceMock.EXPECT().IncreaseBalanceForOrder(
-					gomock.Any(), orderNumber, tt.accrualRes.Accrual,
+				userServiceMock.EXPECT().IncreaseBalanceAndUpdateOrderStatus(
+					gomock.Any(), orderNumber, tt.accrualRes.Accrual, tt.accrualRes.Status,
 				).Return(nil)
 			}
 			orderServiceMock := mock_workers.NewMockOrderService(ctrl)
-			orderServiceMock.EXPECT().UpdateOrderStatusAndAccrual(
-				gomock.Any(),
-				orderNumber,
-				tt.accrualRes.Status,
-				tt.accrualRes.Accrual,
-			).Return(nil)
+			if tt.shouldUpdateOrderStatus {
+				orderServiceMock.EXPECT().UpdateOrderStatusAndAccrual(
+					gomock.Any(),
+					orderNumber,
+					tt.accrualRes.Status,
+					tt.accrualRes.Accrual,
+				).Return(nil)
+			}
 
 			orderWorker := NewOrderAccrualWorker(
 				make(chan string), userServiceMock, orderServiceMock, accrualCalculatorMock, []string{},

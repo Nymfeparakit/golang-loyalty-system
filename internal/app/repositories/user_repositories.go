@@ -12,11 +12,12 @@ import (
 )
 
 type UserRepository struct {
-	db *sqlx.DB
+	db              *sqlx.DB
+	orderRepository *OrderRepository
 }
 
-func NewUserRepository(db *sqlx.DB) *UserRepository {
-	return &UserRepository{db: db}
+func NewUserRepository(db *sqlx.DB, repository *OrderRepository) *UserRepository {
+	return &UserRepository{db: db, orderRepository: repository}
 }
 
 func (r *UserRepository) CreateUser(ctx context.Context, user domain.UserDTO) error {
@@ -65,13 +66,21 @@ func (r *UserRepository) GetUserByLogin(ctx context.Context, login string) (*dom
 	return &existingUser, nil
 }
 
-func (r *UserRepository) IncreaseBalanceForOrder(ctx context.Context, orderNumber string, accrual float32) error {
+func (r *UserRepository) IncreaseBalanceAndUpdateOrderStatus(
+	ctx context.Context, orderNumber string, accrual float32, orderStatus string,
+) error {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
 	// находим пользователя, для которого сущесвует заказ
 	// и прибавляем ему баланс
 	query := `UPDATE user_balance SET current=current+$1
 		WHERE user_id = (SELECT user_id FROM user_order WHERE number = $2)
 	`
-	result, err := r.db.ExecContext(ctx, query, accrual, orderNumber)
+	result, err := tx.ExecContext(ctx, query, accrual, orderNumber)
 	if err != nil {
 		return err
 	}
@@ -83,5 +92,10 @@ func (r *UserRepository) IncreaseBalanceForOrder(ctx context.Context, orderNumbe
 		log.Error().Msg("increase user balance: expected one row to be affected")
 	}
 
-	return nil
+	err = r.orderRepository.UpdateOrderStatusAndAccrual(ctx, orderNumber, orderStatus, accrual, tx)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }

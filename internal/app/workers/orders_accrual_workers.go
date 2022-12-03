@@ -9,7 +9,7 @@ import (
 )
 
 type UserService interface {
-	IncreaseBalanceForOrder(ctx context.Context, orderNumber string, accrual float32) error
+	IncreaseBalanceAndUpdateOrderStatus(ctx context.Context, orderNumber string, accrual float32, orderStatus string) error
 }
 
 type OrderService interface {
@@ -54,19 +54,20 @@ func (w *OrderAccrualWorker) processOrder(ctx context.Context, orderNumber strin
 	// обновляем статус заказа
 	newOrderStatus := accrualRes.Status
 	orderAccrual := accrualRes.Accrual
-	log.Info().Msg(fmt.Sprintf("updating order status: %v - %v", orderNumber, newOrderStatus))
-	err = w.orderService.UpdateOrderStatusAndAccrual(ctx, orderNumber, newOrderStatus, orderAccrual)
-	if err != nil {
-		log.Error().Msg(fmt.Sprintf("failed to update order status: %v", err.Error()))
-		return false, err
-	}
 
 	// если заказ оказался обработанным, то прибавляем пользователю баланс по этому заказу
 	if newOrderStatus == domain.OrderProcessedStatus && accrualRes.Accrual != 0 {
 		log.Info().Msg(fmt.Sprintf("increasing balance for order '%s', accrual - %f", orderNumber, accrualRes.Accrual))
-		err = w.userService.IncreaseBalanceForOrder(ctx, orderNumber, accrualRes.Accrual)
+		err = w.userService.IncreaseBalanceAndUpdateOrderStatus(ctx, orderNumber, accrualRes.Accrual, newOrderStatus)
 		if err != nil {
 			log.Error().Msg("increasing user balance failed: " + err.Error())
+			return false, err
+		}
+	} else {
+		log.Info().Msg(fmt.Sprintf("updating order status: %v - %v", orderNumber, newOrderStatus))
+		err = w.orderService.UpdateOrderStatusAndAccrual(ctx, orderNumber, newOrderStatus, orderAccrual)
+		if err != nil {
+			log.Error().Msg(fmt.Sprintf("failed to update order status: %v", err.Error()))
 			return false, err
 		}
 	}

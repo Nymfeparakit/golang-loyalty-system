@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"database/sql"
 	"gophermart/internal/app/domain"
 	"strconv"
 	"time"
@@ -10,7 +11,7 @@ import (
 type OrderRepository interface {
 	GetOrCreateOrder(ctx context.Context, orderToCreate domain.OrderDTO) (*domain.OrderDTO, bool, error)
 	GetOrdersByUser(ctx context.Context, user *domain.UserDTO) ([]*domain.OrderDTO, error)
-	UpdateOrderStatusAndAccrual(ctx context.Context, orderNumber string, orderStatus string, accrual float32) error
+	UpdateOrderStatusAndAccrual(ctx context.Context, orderNumber string, orderStatus string, accrual float32, tx *sql.Tx) error
 	GetOrdersWithStatusesIn(ctx context.Context, statuses []string) ([]*domain.OrderDTO, error)
 }
 
@@ -47,7 +48,7 @@ func (s *OrderService) GetOrdersByUser(ctx context.Context, user *domain.UserDTO
 }
 
 func (s *OrderService) UpdateOrderStatusAndAccrual(ctx context.Context, orderNumber string, orderStatus string, accrual float32) error {
-	return s.orderRepository.UpdateOrderStatusAndAccrual(ctx, orderNumber, orderStatus, accrual)
+	return s.orderRepository.UpdateOrderStatusAndAccrual(ctx, orderNumber, orderStatus, accrual, nil)
 }
 
 func (s *OrderService) GetUnprocessedOrdersNumbers(ctx context.Context) ([]string, error) {

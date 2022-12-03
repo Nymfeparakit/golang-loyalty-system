@@ -13,7 +13,7 @@ const PasswordHashCost = 10
 type UserRepository interface {
 	CreateUser(ctx context.Context, user domain.UserDTO) error
 	GetUserByLogin(ctx context.Context, username string) (*domain.UserDTO, error)
-	IncreaseBalanceForOrder(ctx context.Context, orderNumber string, accrual float32) error
+	IncreaseBalanceAndUpdateOrderStatus(ctx context.Context, orderNumber string, accrual float32, orderStatus string) error
 }
 
 type UserService struct {
@@ -43,6 +43,6 @@ func (s *UserService) GetUserByLogin(ctx context.Context, username string) (*dom
 	return user, err
 }
 
-func (s *UserService) IncreaseBalanceForOrder(ctx context.Context, orderNumber string, accrual float32) error {
-	return s.userRepository.IncreaseBalanceForOrder(ctx, orderNumber, accrual)
+func (s *UserService) IncreaseBalanceAndUpdateOrderStatus(ctx context.Context, orderNumber string, accrual float32, orderStatus string) error {
+	return s.userRepository.IncreaseBalanceAndUpdateOrderStatus(ctx, orderNumber, accrual, orderStatus)
 }
