@@ -1,3 +1,87 @@
 package main
 
-func main() {}
+import (
+	"context"
+	"fmt"
+	_ "github.com/jackc/pgx/stdlib"
+	"github.com/jmoiron/sqlx"
+	"github.com/rs/zerolog/log"
+	"gophermart/internal/app/configs"
+	"gophermart/internal/app/handlers"
+	"gophermart/internal/app/repositories"
+	"gophermart/internal/app/services"
+	"gophermart/internal/app/workers"
+	"net/http"
+	"os/signal"
+	"syscall"
+	"time"
+)
+
+func initOrderService(orderSender *services.OrderSender, orderRepository *repositories.OrderRepository) *services.OrderService {
+	return services.NewOrderService(orderRepository, orderSender)
+}
+
+func initUserService(db *sqlx.DB, orderRepository *repositories.OrderRepository) *services.UserService {
+	userRepository := repositories.NewUserRepository(db, orderRepository)
+	return services.NewUserService(userRepository)
+}
+
+func main() {
+	// загружаем настройки
+	cfg, err := configs.InitConfig()
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+
+	// Подключаемся к БД
+	db, err := repositories.InitDB(cfg.DatabaseURI)
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+	defer db.Close()
+
+	ordersCh := make(chan string)
+	orderRepository := repositories.NewOrderRepository(db)
+	orderSender := services.NewOrderSender(ordersCh)
+	orderService := initOrderService(orderSender, orderRepository)
+	userService := initUserService(db, orderRepository)
+	// Инициируем хэндлеры для ендпоинтов
+	router := handlers.InitRouter(db, cfg, orderService, userService)
+	// Запускаем воркеров
+	ctx, cancelFunc := context.WithCancel(context.Background())
+	runner := workers.NewRunner()
+	runner.StartWorkers(ctx, cfg, ordersCh, orderService, userService)
+
+	srv := &http.Server{
+		Addr:    cfg.RunAddr,
+		Handler: router,
+	}
+
+	go func() {
+		// service connections
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Error().Msg(fmt.Sprintf("listen: %s\n", err))
+		}
+	}()
+
+	notifyCtx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	<-notifyCtx.Done()
+	stop()
+	log.Info().Msg("starting graceful shutdown...")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	log.Info().Msg("waiting for connections to close...")
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Error().Msg(fmt.Sprintf("server shutdown error: %v", err))
+	}
+
+	// после остановки сервера останавливаем отправку ордеров воркерам
+	orderSender.Stop()
+	// выполняем остановку всех воркеров
+	cancelFunc()
+	if ok := runner.WaitWorkersToStop(5 * time.Second); !ok {
+		log.Error().Msg("waiting for workers to stop - timeout error")
+	}
+}
