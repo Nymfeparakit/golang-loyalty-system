@@ -34,16 +34,16 @@ func (m *MockUserService) EXPECT() *MockUserServiceMockRecorder {
 	return m.recorder
 }
 
-// IncreaseBalanceForOrder mocks base method.
-func (m *MockUserService) IncreaseBalanceForOrder(arg0 context.Context, arg1 string, arg2 float32) error {
+// IncreaseBalanceAndUpdateOrderStatus mocks base method.
+func (m *MockUserService) IncreaseBalanceAndUpdateOrderStatus(arg0 context.Context, arg1 string, arg2 float32, arg3 string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IncreaseBalanceForOrder", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "IncreaseBalanceAndUpdateOrderStatus", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// IncreaseBalanceForOrder indicates an expected call of IncreaseBalanceForOrder.
-func (mr *MockUserServiceMockRecorder) IncreaseBalanceForOrder(arg0, arg1, arg2 interface{}) *gomock.Call {
+// IncreaseBalanceAndUpdateOrderStatus indicates an expected call of IncreaseBalanceAndUpdateOrderStatus.
+func (mr *MockUserServiceMockRecorder) IncreaseBalanceAndUpdateOrderStatus(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IncreaseBalanceForOrder", reflect.TypeOf((*MockUserService)(nil).IncreaseBalanceForOrder), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IncreaseBalanceAndUpdateOrderStatus", reflect.TypeOf((*MockUserService)(nil).IncreaseBalanceAndUpdateOrderStatus), arg0, arg1, arg2, arg3)
 }

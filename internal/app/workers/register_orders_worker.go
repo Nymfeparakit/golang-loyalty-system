@@ -34,6 +34,7 @@ func (w *RegisterOrdersWorker) Run(ctx context.Context, wg *sync.WaitGroup) {
 				return
 			}
 			log.Info().Msg(fmt.Sprintf("sending to accrual workers order '%s'", orderNumber))
+			// отправляем заказ в буферизованный канал processOrderCh
 			w.processOrderCh <- orderNumber
 		case <-ctx.Done():
 			log.Info().Msg("stopping worker registering orders - context is done")

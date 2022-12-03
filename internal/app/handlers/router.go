@@ -2,31 +2,44 @@ package handlers
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/jmoiron/sqlx"
 	"gophermart/internal/app/configs"
 	"gophermart/internal/app/middlewares"
+	"gophermart/internal/app/repositories"
 	"gophermart/internal/app/services"
 )
 
-func InitRouter(cfg *configs.Config, orderService *services.OrderService, userService *services.UserService) *gin.Engine {
+func InitRouter(
+	db *sqlx.DB, cfg *configs.Config, orderService *services.OrderService, userService *services.UserService,
+) *gin.Engine {
 	r := gin.Default()
 	r.Use(middlewares.DecompressingRequestMiddleware())
 	r.Use(middlewares.CompressingResponseMiddleware())
 	tokenService := services.NewAuthJWTTokenService(cfg.AuthSecretKey)
 	registrationService := services.NewRegistrationService(userService, tokenService)
 	authService := services.NewAuthService(userService, tokenService)
+
+	apiGroup := r.Group("/api/user")
 	registrationHandler := NewRegistrationHandler(registrationService)
-	r.POST("/api/user/register", registrationHandler.HandleRegistration)
+	apiGroup.POST("/register", registrationHandler.HandleRegistration)
 
 	loginHandler := NewLoginHandler(authService)
-	r.POST("/api/user/login", loginHandler.HandleLogin)
+	apiGroup.POST("/login", loginHandler.HandleLogin)
 
-	needAuthURLsGroup := r.Group("")
+	needAuthURLsGroup := apiGroup.Group("")
 	needAuthURLsGroup.Use(middlewares.TokenAuthMiddleware(userService, authService))
 
 	orderNumberValidator := services.NewOrderNumberValidator()
 	orderHandler := NewOrderHandler(authService, orderService, orderNumberValidator)
-	needAuthURLsGroup.POST("/api/user/orders", orderHandler.HandleCreateOrder)
-	needAuthURLsGroup.GET("/api/user/orders", orderHandler.HandleListOrders)
+	needAuthURLsGroup.POST("/orders", orderHandler.HandleCreateOrder)
+	needAuthURLsGroup.GET("/orders", orderHandler.HandleListOrders)
+
+	balanceRepository := repositories.NewBalanceRepository(db)
+	balanceService := services.NewUserBalanceService(balanceRepository)
+	balanceHandler := NewUserBalanceHandler(orderNumberValidator, authService, balanceService)
+	needAuthURLsGroup.POST("/balance/withdraw", balanceHandler.HandleWithdrawBalance)
+	needAuthURLsGroup.GET("/withdrawals", balanceHandler.HandleListBalanceWithdrawals)
+	needAuthURLsGroup.GET("/balance", balanceHandler.HandleGetUserBalance)
 
 	return r
 }

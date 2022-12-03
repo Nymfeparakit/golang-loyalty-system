@@ -70,12 +70,53 @@ func (r *OrderRepository) GetOrdersByUser(ctx context.Context, user *domain.User
 	return orders, nil
 }
 
-func (r *OrderRepository) UpdateOrderStatus(ctx context.Context, orderNumber string, orderStatus string) error {
-	query := `UPDATE user_order SET status=$1 WHERE number=$2`
-	_, err := r.db.ExecContext(ctx, query, &orderStatus, &orderNumber)
+func (r *OrderRepository) UpdateOrderStatusAndAccrual(
+	ctx context.Context,
+	orderNumber string,
+	orderStatus string,
+	accrual float32,
+	tx *sql.Tx,
+) error {
+	query := `UPDATE user_order SET status=$1, accrual=$2 WHERE number=$3`
+	var err error
+	if tx != nil {
+		_, err = tx.ExecContext(ctx, query, &orderStatus, &accrual, &orderNumber)
+	} else {
+		_, err = r.db.ExecContext(ctx, query, &orderStatus, &accrual, &orderNumber)
+	}
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (r *OrderRepository) GetOrdersWithStatusesIn(ctx context.Context, statuses []string) ([]*domain.OrderDTO, error) {
+	query := `SELECT * FROM user_order WHERE status IN (?)`
+	query, args, err := sqlx.In(query, statuses)
+	if err != nil {
+		return nil, err
+	}
+	query = r.db.Rebind(query)
+	rows, err := r.db.QueryxContext(ctx, query, args...)
+	if err != nil {
+		return []*domain.OrderDTO{}, err
+	}
+
+	var orders []*domain.OrderDTO
+	for rows.Next() {
+		var order domain.OrderDTO
+		err := rows.StructScan(&order)
+		if err != nil {
+			return nil, err
+		}
+		orders = append(orders, &order)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return orders, err
+	}
+
+	return orders, nil
 }

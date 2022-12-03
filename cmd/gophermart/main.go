@@ -17,13 +17,12 @@ import (
 	"time"
 )
 
-func initOrderService(db *sqlx.DB, orderSender *services.OrderSender) *services.OrderService {
-	orderRepository := repositories.NewOrderRepository(db)
+func initOrderService(orderSender *services.OrderSender, orderRepository *repositories.OrderRepository) *services.OrderService {
 	return services.NewOrderService(orderRepository, orderSender)
 }
 
-func initUserService(db *sqlx.DB) *services.UserService {
-	userRepository := repositories.NewUserRepository(db)
+func initUserService(db *sqlx.DB, orderRepository *repositories.OrderRepository) *services.UserService {
+	userRepository := repositories.NewUserRepository(db, orderRepository)
 	return services.NewUserService(userRepository)
 }
 
@@ -44,11 +43,12 @@ func main() {
 	defer db.Close()
 
 	ordersCh := make(chan string)
+	orderRepository := repositories.NewOrderRepository(db)
 	orderSender := services.NewOrderSender(ordersCh)
-	orderService := initOrderService(db, orderSender)
-	userService := initUserService(db)
+	orderService := initOrderService(orderSender, orderRepository)
+	userService := initUserService(db, orderRepository)
 	// Инициируем хэндлеры для ендпоинтов
-	router := handlers.InitRouter(cfg, orderService, userService)
+	router := handlers.InitRouter(db, cfg, orderService, userService)
 	// Запускаем воркеров
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	runner := workers.NewRunner()

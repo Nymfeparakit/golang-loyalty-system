@@ -33,6 +33,7 @@ func (h *OrderHandler) HandleCreateOrder(c *gin.Context) {
 	user, ok := h.authService.GetUserFromContext(c.Request.Context())
 	if !ok {
 		c.AbortWithStatus(http.StatusUnauthorized)
+		return
 	}
 
 	// читаем тело запроса

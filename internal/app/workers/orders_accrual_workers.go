@@ -6,14 +6,16 @@ import (
 	"github.com/rs/zerolog/log"
 	"gophermart/internal/app/domain"
 	"sync"
+	"time"
 )
 
 type UserService interface {
-	IncreaseBalanceForOrder(ctx context.Context, orderNumber string, accrual float32) error
+	IncreaseBalanceAndUpdateOrderStatus(ctx context.Context, orderNumber string, accrual float32, orderStatus string) error
 }
 
 type OrderService interface {
-	UpdateOrderStatus(ctx context.Context, orderNumber string, orderStatus string) error
+	UpdateOrderStatusAndAccrual(ctx context.Context, orderNumber string, orderStatus string, accrual float32) error
+	GetUnprocessedOrdersNumbers(ctx context.Context) ([]string, error)
 }
 
 type OrderAccrualWorker struct {
@@ -29,8 +31,8 @@ func NewOrderAccrualWorker(
 	userService UserService,
 	orderService OrderService,
 	accrualCalculator AccrualCalculator,
+	unprocessedOrders []string,
 ) *OrderAccrualWorker {
-	unprocessedOrders := make([]string, 0)
 	return &OrderAccrualWorker{
 		ordersCh:          ordersCh,
 		accrualCalculator: accrualCalculator,
@@ -49,26 +51,33 @@ func (w *OrderAccrualWorker) processOrder(ctx context.Context, orderNumber strin
 	if err != nil {
 		return false, err
 	}
+	time.Sleep(3 * time.Second)
 
 	// обновляем статус заказа
 	newOrderStatus := accrualRes.Status
-	log.Info().Msg(fmt.Sprintf("updating order status: %v - %v", orderNumber, newOrderStatus))
-	err = w.orderService.UpdateOrderStatus(ctx, orderNumber, newOrderStatus)
-	if err != nil {
-		log.Error().Msg(fmt.Sprintf("failed to update order status: %v", err.Error()))
-		return false, err
-	}
+	orderAccrual := accrualRes.Accrual
 
 	// если заказ оказался обработанным, то прибавляем пользователю баланс по этому заказу
 	if newOrderStatus == domain.OrderProcessedStatus && accrualRes.Accrual != 0 {
 		log.Info().Msg(fmt.Sprintf("increasing balance for order '%s', accrual - %f", orderNumber, accrualRes.Accrual))
-		err = w.userService.IncreaseBalanceForOrder(ctx, orderNumber, accrualRes.Accrual)
+		err = w.userService.IncreaseBalanceAndUpdateOrderStatus(ctx, orderNumber, accrualRes.Accrual, newOrderStatus)
 		if err != nil {
 			log.Error().Msg("increasing user balance failed: " + err.Error())
 			return false, err
 		}
+	} else {
+		log.Info().Msg(fmt.Sprintf("updating order status: %v - %v", orderNumber, newOrderStatus))
+		err = w.orderService.UpdateOrderStatusAndAccrual(ctx, orderNumber, newOrderStatus, orderAccrual)
+		if err != nil {
+			log.Error().Msg(fmt.Sprintf("failed to update order status: %v", err.Error()))
+			return false, err
+		}
 	}
 
+	if accrualRes.Status == domain.OrderInvalidStatus {
+		log.Error().Msg(fmt.Sprintf("order '%s' got status 'INVALID'", orderNumber))
+		return true, nil
+	}
 	if accrualRes.Status == domain.OrderProcessedStatus {
 		return true, nil
 	}
@@ -115,6 +124,7 @@ func (w *OrderAccrualWorker) Run(ctx context.Context, wg *sync.WaitGroup) {
 					log.Info().Msg("orders worker stops - order chan is closed")
 					return
 				}
+				log.Info().Msg(fmt.Sprintf("receiving new order '%s' in accrual worker", orderNumber))
 				w.unprocessedOrders = append(w.unprocessedOrders, orderNumber)
 			case <-ctx.Done():
 				log.Info().Msg("orders worker stops - context is done")

@@ -2,6 +2,7 @@ package workers
 
 import (
 	"context"
+	"fmt"
 	"github.com/rs/zerolog/log"
 	"gophermart/internal/app/configs"
 	"gophermart/internal/app/domain"
@@ -43,8 +44,23 @@ func (r *Runner) StartWorkers(
 	go worker.Run(ctx, r.ordersWorkersWG)
 
 	log.Info().Msg("starting orders accrual workers")
+	orders, err := orderService.GetUnprocessedOrdersNumbers(ctx)
+	if err != nil {
+		log.Error().Msg(fmt.Sprintf("getting unprocessed orders failed - %v", err.Error()))
+		return
+	}
+
+	ordersNum := len(orders)
+	ordersPerWorker := ordersNum / accrualWorkersNum
 	for i := 0; i < accrualWorkersNum; i++ {
-		worker := NewOrderAccrualWorker(processOrdersCh, userService, orderService, accrualCalculator)
+		var ordersForWorker []string
+		ordersStartIdx := i * ordersPerWorker
+		if i == accrualWorkersNum-1 {
+			ordersForWorker = orders[ordersStartIdx:]
+		} else {
+			ordersForWorker = orders[ordersStartIdx : ordersStartIdx+ordersPerWorker]
+		}
+		worker := NewOrderAccrualWorker(processOrdersCh, userService, orderService, accrualCalculator, ordersForWorker)
 		r.ordersWorkersWG.Add(1)
 		go worker.Run(ctx, r.ordersWorkersWG)
 	}
