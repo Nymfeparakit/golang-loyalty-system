@@ -1,6 +1,30 @@
-This project represents example of loyalty system, where users can register their orders to earn loyalty points.
-API has following endpoints:
-- `POST /api/user/register` - user registration
-- `POST /api/user/login` - user login
-- `POST /api/user/orders` - registraion of a new order
-- `GET /api/user/orders` - get list of all orders uploaded by the user, their processing statuses and information on charges
+Проект представляет собой пример накопительной системы, в которой пользователи могут регистрировать свои заказы для того, чтобы зарабатывать баллы лояльности.  
+## Запуск
+Для запуска сервера необходима база данных postgres. URL к базе данных при запуске сервера указывается с помощью флага `-d` или переменной окружения `DATABASE_URI`. Перед запуском сервера необходимо также запустить подходящую версию для текущей ОС системы рассчета баллов из папки `cmd/accrual/`:
+```
+./accrual_linux_amd64
+go build -o gophermart cmd/gophermart/main.go
+./gophermart -d "postgresql://{db_user}:{db_password}@localhost:5432/{db_name}"
+```
+## Примеры использования
+Для загрузки заказов пользователю необходимо сначала осуществить регистрацию.
+```
+HTTP/1.1 POST /api/user/register
+Content-Type: application/json
+
+{
+    "login": "<login>",
+    "password": "<password>"
+}
+```
+Затем пользователь может загрузить ранее созданный заказ для рассчета баллов.
+```
+HTTP/1.1 POST /api/user/orders
+Content-Type: text/plain
+
+1234567890
+```
+Чтобы узнать о возможных начислениях, пользователь может проверить баланс.
+```
+HTTP/1.1 GET /api/user/balance
+```
